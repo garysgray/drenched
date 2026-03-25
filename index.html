@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1, width=device-width">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<title>Rain Scene</title>
+</head>
+<body>
+<div id="bg"></div>
+<div id="rain-angled"></div>
+<div id="rain-straight"></div>
+<div id="rain-rev"></div>
+<div id="lightning"></div>
+<div id="fog"></div>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<canvas id="noise"></canvas>
+<div class="text-stage">
+  <div class="text-wrap" id="text-toggle" title="click me">
+    <div class="shadow-text">It was a Dark and Stormy Night!!!</div>
+    <div class="main-text">It was a Dark and Stormy Night!!!</div>
+  </div>
+</div>
+<div class="HUD">
+  <div class="control-group">
+    <span class="control-label">Text Color</span>
+    <div class="btn-row">
+      <button id="red" class="active-red">Red</button>
+      <button id="green">Green</button>
+      <button id="blue">Blue</button>
+    </div>
+  </div>
+  <div class="hud-divider"></div>
+  <div class="control-group">
+    <span class="control-label">Rain Intensity</span>
+    <div class="btn-row">
+      <button id="slow" class="active-speed">Rain</button>
+      <button id="med">Storm</button>
+      <button id="fast">Torrent</button>
+    </div>
+  </div>
+  <div class="hud-divider"></div>
+  <div class="control-group">
+    <span class="control-label">Text Mode</span>
+    <div class="btn-row">
+      <button id="text-mode-static" class="active-speed">Static</button>
+      <button id="text-mode-scroll">Scroll</button>
+    </div>
+  </div>
+  <div class="hud-divider" id="scroll-speed-divider"></div>
+<div class="hud-slider-group" id="scroll-speed-group" style="display:none;">
+  <span class="control-label">Scroll Speed</span>
+  <div class="slider-row">
+    <input type="range" id="scroll-speed" min="5" max="40" value="20" step="1">
+    <span class="slider-value" id="scroll-speed-val">20s</span>
+  </div>
+</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# ── System files ─────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Build / output ──────────────────────────
+dist/
+build/
+
+# ── Dependencies ────────────────────────────
+node_modules/
+
+# ── Logs & temp ────────────────────────────
+*.log
+*.tmp
+
+# ── Environment / secrets ───────────────────
+.env
+
+# ── Python ─────────────────────────────────
+__pycache__/
+*.pyc
+
+# ── Project-specific ───────────────────────
+stuff/
+config.py
