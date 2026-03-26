@@ -1,106 +1,101 @@
+# Dark & Stormy Night — Rain Atmosphere Engine
+
 ![Game Splash](images/drenched.png)
 
-# Rain Scene (HTML/CSS/JS)
+An interactive atmospheric scene built with plain HTML, CSS, and JavaScript. Switch between storm intensities, text colors, and display modes — visuals and audio respond together in real time.
 
-A simple animated rain scene with adjustable intensity and color effects.
-Built using plain HTML, CSS, and JavaScript—no frameworks.
+No frameworks. No build tools. Just open `index.html` and go.
 
 ---
 
 ## Features
 
-* Three rain modes:
-
-  * **Rain (Drizzle)** – light vertical rain
-  * **Storm** – angled wind-driven rain
-  * **Torrent** – heavy rain with reverse gust effects
-* Dynamic lightning flashes
-* Fog and atmosphere layers
-* CRT-style scanlines + vignette
-* Color controls for text (red, green, blue)
+- **Three storm intensities** — Rain, Storm, Torrent
+- **Synthesized audio** — rain noise, thunder, and UI clicks via Web Audio API (no sound files)
+- **Dynamic lightning** — CSS-driven flashes that scale with intensity
+- **Layered atmosphere** — fog drift, CRT scanlines, vignette, film grain
+- **Text modes** — static glowing title or scrolling marquee with adjustable speed
+- **Color themes** — Red, Green, Blue with matching glow effects
+- **Auto-hiding HUD** — fades out after 3 seconds of inactivity, cursor hides too
+- **Responsive** — stacks cleanly on mobile screens under 640px
 
 ---
 
 ## Project Structure
 
 ```
-project-folder/
-│
+Rain/
+│ 
 ├── index.html
-├── style.css
-├── script.js
+│ 
+├── css/
+│   └── style.css
+│ 
+├── js/
+│   ├── config.js          — all intensity presets, colors, audio levels
+│   ├── rain-audio.js      — RainAudio class (rain noise + thunder + click)
+│   ├── rain-visuals.js    — RainVisuals class (CSS vars + film grain canvas)
+│   ├── text-display.js    — TextDisplay class (static / scroll toggle)
+│   ├── hud.js             — HUD class (buttons, auto-hide, cursor)
+│   ├── engine.js          — Engine class (creates and wires all systems)
+│   └── main.js            — entry point (boots engine on DOMContentLoaded)
+│ 
 └── images/
-    ├── rain.png
-    ├── rain_straight.png
-    ├── rain_rev.png
-    └── 832591.jpg
-```
-
+    
 ---
 
 ## Setup
 
 1. Clone or download the repo
 2. Make sure your folder structure matches the above
-3. Open `index.html` in your browser
+3. Open `index.html` in a browser
 
-No build tools or install steps required.
-
----
-
-## Important Notes
-
-* The app depends on images located in the `images/` folder
-* If you don’t see rain:
-
-  * Check that the image files exist
-  * Verify paths inside `style.css` match your folder structure
-
-Example:
-
-```css
-background: url(../images/rain.png);
-```
-
-If your CSS file is in the root folder, this path may need to be:
-
-```css
-background: url(images/rain.png);
-```
+No install steps required.
 
 ---
+
 
 ## Controls
 
-### Text Color
+| Group | Options |
+|---|---|
+| Text Color | Red, Green, Blue |
+| Rain Intensity | Rain, Storm, Torrent |
+| Text Mode | Static, Scroll (with speed slider) |
 
-* Red
-* Green
-* Blue
-
-### Rain Intensity
-
-* Rain (light)
-* Storm (medium)
-* Torrent (heavy)
+The HUD auto-hides after 3 seconds. Move the mouse or tap the screen to bring it back.
 
 ---
 
-## Tech Used
+## How the Audio Works
 
-* HTML5
-* CSS3 (animations, variables)
-* Vanilla JavaScript
+Everything is synthesized via the Web Audio API — no audio files required.
+
+- **Rain** — white noise → bandpass filter → gain
+- **Thunder** — noise crack (80ms burst) + 1–3 rumble layers (low-shelf + hi-cut filter), scheduled recursively with random delay
+- **UI click** — short noise burst → highpass filter
+
+Thunder delay by intensity: Rain 15–30s · Storm 8–16s · Torrent 3–7s
 
 ---
 
-## Purpose
+## Tech
 
-This project is a lightweight visual scene experiment focused on:
+- HTML5
+- CSS3 (animations, custom properties)
+- Vanilla JavaScript (Web Audio API, Canvas, requestAnimationFrame)
 
-* Layered animation
-* Atmospheric effects
-* UI-controlled visual states
+---
+
+## Roadmap
+
+- [ ] JS-driven lightning with randomized timing
+- [ ] Wind gust audio layer
+- [ ] Master volume control
+- [ ] Keyboard shortcuts for intensity
+- [ ] Fullscreen button
+- [ ] Config-driven environment system (ocean, forest, desert, space...)
+- [ ] Crossfade transitions between environments
 
 ---
 

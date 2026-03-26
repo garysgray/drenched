@@ -1,0 +1,525 @@
+/* ══════════════════════════════════════════════════════════════
+   DARK & STORMY NIGHT — style.css
+   All magic numbers live in :root as custom properties.
+   Nothing else in this file should contain raw values.
+   ══════════════════════════════════════════════════════════════ */
+
+
+/* ── Design tokens ──────────────────────────────────────────── */
+:root {
+
+  /* Theme — overwritten by JS on color change */
+  --text-color:          #cc0000;
+  --glow-color:          rgba(200, 0, 0, 0.75);
+
+  /* Rain layer opacities — overwritten by JS on intensity change */
+  --op-angled:           0.0;
+  --op-straight:         0.6;
+  --op-rev:              0.0;
+
+  /* Rain layer animation durations — overwritten by JS */
+  --dur-angled:          0.22s;
+  --dur-straight:        0.28s;
+  --dur-rev:             0.18s;
+
+  /* Lightning flash strengths — overwritten by JS */
+  --lightning-a:         0.0;
+  --lightning-b:         0.0;
+
+  /* Layout */
+  --text-top:            22vh;     /* vertical position of hero text and scroll text */
+  --text-pad-x:          4vw;      /* horizontal padding around hero text */
+  --hud-bottom:          32px;     /* HUD distance from bottom on desktop */
+  --hud-bottom-mobile:   20px;     /* HUD distance from bottom on mobile */
+  --hud-pad:             12px 18px;
+  --hud-pad-mobile:      14px 16px;
+
+  /* Typography */
+  --font-hero:           'Creepster', cursive;
+  --font-hud:            'Special Elite', monospace;
+  --text-size:           clamp(40px, 8.5vw, 120px);
+  --text-shadow-offset:  7px;      /* static text drop-shadow offset */
+  --text-shadow-opacity: 0.85;
+
+  /* Rain tile sizes */
+  --rain-angled-size:    483px;
+  --rain-straight-size:  512px;
+  --rain-rev-size:       367px;
+
+  /* Rain layer transforms */
+  --rain-angled-rotate:  1.5deg;
+  --rain-rev-rotate:     2.2deg;
+  --rain-scale:          1.1;
+
+  /* Lightning */
+  --lightning-color:     #d8eeff;
+  --lightning-cycle:     5s;
+  --lightning-delay:     1s;
+
+  /* Fog */
+  --fog-drift-duration:  14s;
+  --fog-drift-amount:    4%;
+  --fog-opacity-min:     0.7;
+
+  /* Gust */
+  --gust-duration:       8s;
+
+  /* Background overlay */
+  --bg-overlay:          rgba(0, 0, 0, 0.38);
+
+  /* Vignette */
+  --vignette-start:      35%;
+  --vignette-color:      rgba(0, 0, 0, 0.92);
+
+  /* Scanlines */
+  --scanline-gap:        2px;
+  --scanline-color:      rgba(0, 0, 0, 0.06);
+
+  /* HUD */
+  --hud-bg:              rgba(4, 4, 6, 0.82);
+  --hud-border:          rgba(255, 255, 255, 0.07);
+  --hud-radius:          8px;
+  --hud-blur:            16px;
+  --hud-shadow:          0 8px 40px rgba(0,0,0,0.85),
+                         0 1px 0 rgba(255,255,255,0.05) inset,
+                         0 -1px 0 rgba(0,0,0,0.6) inset;
+  --hud-divider-color:   rgba(255, 255, 255, 0.08);
+
+  --btn-bg:              rgba(255, 255, 255, 0.03);
+  --btn-border:          rgba(255, 255, 255, 0.08);
+  --btn-color:           rgba(255, 255, 255, 0.58);
+  --btn-hover-bg:        rgba(255, 255, 255, 0.07);
+  --btn-hover-border:    rgba(255, 255, 255, 0.2);
+  --btn-hover-color:     rgba(255, 255, 255, 0.85);
+  --btn-radius:          4px;
+  --btn-pad:             6px 12px;
+  --btn-pad-mobile:      8px 12px;
+  --btn-font-size:       10px;
+  --btn-font-size-mobile:11px;
+
+  --label-font-size:     8.5px;
+  --label-font-size-mob: 9px;
+  --label-color:         rgba(255, 255, 255, 0.55);
+
+  --slider-width:        80px;
+  --slider-color:        #ffcc44;
+  --slider-val-color:    #ffcc44;
+  --slider-val-size:     9px;
+  --slider-val-width:    28px;
+
+  /* Text entrance animation */
+  --entrance-duration:   2.4s;
+  --entrance-blur:       8px;
+  --entrance-y:          -18px;
+  --entrance-scale:      0.97;
+
+  /* Flicker animation */
+  --flicker-duration:    7s;
+  --flicker-low:         0.35;
+  --flicker-mid:         0.6;
+
+  /* Scroll text */
+  --scroll-duration:     15s;
+
+  /* Responsive breakpoint */
+  --bp-mobile:           640px;
+}
+
+
+/* ── Reset ──────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #000;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: crosshair;
+}
+
+
+/* ── Background ─────────────────────────────────────────────── */
+#bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: url(../images/trees.jpg) center / cover no-repeat;
+}
+#bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--bg-overlay);
+}
+
+
+/* ── Rain layers ────────────────────────────────────────────── */
+#rain-angled,
+#rain-straight,
+#rain-rev {
+  position: fixed; inset: 0; pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+#rain-angled {
+  z-index: 2;
+  background: url(../images/rain.png);
+  background-size: var(--rain-angled-size) auto;
+  transform: rotate(var(--rain-angled-rotate)) scale(var(--rain-scale));
+  animation: anim-angled var(--dur-angled) linear infinite;
+  opacity: var(--op-angled);
+}
+@keyframes anim-angled {
+  from { background-position: 0 0; }
+  to   { background-position: -10% 100%; }
+}
+
+#rain-straight {
+  z-index: 3;
+  background: url(../images/rain_straight.png);
+  background-size: var(--rain-straight-size) auto;
+  animation: anim-straight var(--dur-straight) linear infinite;
+  opacity: var(--op-straight);
+}
+@keyframes anim-straight {
+  from { background-position: 0 0; }
+  to   { background-position: 0 100%; }
+}
+
+#rain-rev {
+  z-index: 4;
+  background: url(../images/rain_rev.png);
+  background-size: var(--rain-rev-size) auto;
+  transform: rotate(var(--rain-rev-rotate)) scale(var(--rain-scale));
+  animation: anim-rev var(--dur-rev) linear infinite,
+             gust var(--gust-duration) ease-in-out infinite;
+  opacity: var(--op-rev);
+}
+@keyframes anim-rev {
+  from { background-position: 0 0; }
+  to   { background-position: 10% 100%; }
+}
+@keyframes gust {
+  0%, 40%, 60%, 100% { opacity: 0; }
+  50%                { opacity: calc(var(--op-rev) * 0.8); }
+}
+
+
+/* ── Lightning ──────────────────────────────────────────────── */
+#lightning {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  background: var(--lightning-color);
+  opacity: 0;
+  animation: bolt var(--lightning-cycle) var(--lightning-delay) linear infinite;
+}
+@keyframes bolt {
+  0%,  7%   { opacity: 0; }
+  8%        { opacity: var(--lightning-a); }
+  9%,  11%  { opacity: 0; }
+  12%       { opacity: var(--lightning-b); }
+  13%, 100% { opacity: 0; }
+}
+
+
+/* ── Fog ────────────────────────────────────────────────────── */
+#fog {
+  position: fixed; inset: 0; z-index: 6; pointer-events: none;
+  background:
+    radial-gradient(ellipse 140% 35% at 20% 85%, rgba(10,30,25,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 25% at 80% 90%, rgba(10,25,30,0.45) 0%, transparent 65%);
+  animation: fog-drift var(--fog-drift-duration) ease-in-out infinite alternate;
+}
+@keyframes fog-drift {
+  from { transform: translateX(calc(var(--fog-drift-amount) * -1)); opacity: var(--fog-opacity-min); }
+  to   { transform: translateX(var(--fog-drift-amount));            opacity: 1; }
+}
+
+
+/* ── Scanlines ──────────────────────────────────────────────── */
+#scanlines {
+  position: fixed; inset: 0; z-index: 80; pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent var(--scanline-gap),
+    var(--scanline-color) var(--scanline-gap),
+    var(--scanline-color) calc(var(--scanline-gap) * 2)
+  );
+}
+
+
+/* ── Vignette ───────────────────────────────────────────────── */
+#vignette {
+  position: fixed; inset: 0; z-index: 81; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent var(--vignette-start), var(--vignette-color) 100%);
+}
+
+
+/* ── Hero text ──────────────────────────────────────────────── */
+.text-stage {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--text-top);
+  padding-left: var(--text-pad-x);
+  padding-right: var(--text-pad-x);
+  pointer-events: none;
+}
+
+.text-wrap {
+  position: relative;
+  text-align: center;
+  animation: text-entrance var(--entrance-duration) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes text-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(var(--entrance-y)) scale(var(--entrance-scale));
+    filter: blur(var(--entrance-blur));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.shadow-text,
+.main-text {
+  font-family: var(--font-hero);
+  font-size: var(--text-size);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  user-select: none;
+}
+
+.shadow-text {
+  color: #000;
+  position: absolute;
+  top:   var(--text-shadow-offset);
+  left:  var(--text-shadow-offset);
+  right: calc(var(--text-shadow-offset) * -1);
+  opacity: var(--text-shadow-opacity);
+}
+
+.main-text {
+  color: var(--text-color);
+  position: relative;
+  text-shadow:
+    0 0 18px  var(--glow-color),
+    0 0 55px  var(--glow-color),
+    0 0 120px var(--glow-color);
+  animation: flicker var(--flicker-duration) ease-in-out infinite;
+}
+@keyframes flicker {
+  0%, 91%, 93%, 100% { opacity: 1; }
+  92%                { opacity: var(--flicker-low); }
+  95%                { opacity: var(--flicker-mid); }
+}
+
+#text-toggle {
+  cursor: pointer;
+  pointer-events: auto;
+}
+#text-toggle:hover .main-text {
+  filter: brightness(1.3);
+  transition: filter 0.3s ease;
+}
+
+
+/* ── Scroll text ────────────────────────────────────────────── */
+.scroll-left {
+  font-family: var(--font-hero);
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  overflow: hidden;
+  font-size: var(--text-size);
+  white-space: nowrap;
+  color: var(--text-color);
+  text-shadow:
+    0 0 18px  var(--glow-color),
+    0 0 55px  var(--glow-color),
+    0 0 120px var(--glow-color);
+  display: none;
+  pointer-events: auto;
+}
+
+.scroll-left p {
+  display: flex;
+  align-items: flex-start;
+  padding-top: var(--text-top);
+  margin: 0;
+  transform: translateX(100vw);
+  animation: scroll-left var(--scroll-duration) linear infinite;
+}
+@keyframes scroll-left {
+  0%   { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+
+.text-stage.scrolling .text-wrap   { display: none; }
+.text-stage.scrolling .scroll-left { display: block; }
+
+
+/* ── HUD ────────────────────────────────────────────────────── */
+.HUD {
+  position: fixed;
+  bottom: var(--hud-bottom); left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: var(--hud-pad);
+  backdrop-filter: blur(var(--hud-blur));
+  box-shadow: var(--hud-shadow);
+  opacity: 0; /* JS drives opacity from here */
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+  padding: 0 14px;
+}
+
+.control-label {
+  font-family: var(--font-hud);
+  font-size: var(--label-font-size);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--label-color);
+}
+
+.btn-row { display: flex; gap: 4px; }
+
+.HUD button {
+  font-family: var(--font-hud);
+  font-size: var(--btn-font-size);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: var(--btn-pad);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  color: var(--btn-color);
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.HUD button:hover {
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-border);
+  color: var(--btn-hover-color);
+}
+.HUD button:active { transform: scale(0.96); }
+
+button.active-red {
+  background: rgba(160, 0, 0, 0.25);
+  border-color: rgba(200, 0, 0, 0.65);
+  color: #ff6060;
+  box-shadow: 0 0 12px rgba(200, 0, 0, 0.4), inset 0 1px 0 rgba(255,80,80,0.1);
+}
+button.active-green {
+  background: rgba(0, 130, 0, 0.2);
+  border-color: rgba(0, 185, 0, 0.65);
+  color: #60ff60;
+  box-shadow: 0 0 12px rgba(0, 185, 0, 0.4), inset 0 1px 0 rgba(80,255,80,0.1);
+}
+button.active-blue {
+  background: rgba(20, 50, 200, 0.22);
+  border-color: rgba(50, 100, 255, 0.65);
+  color: #7099ff;
+  box-shadow: 0 0 12px rgba(30, 90, 255, 0.4), inset 0 1px 0 rgba(80,120,255,0.1);
+}
+button.active-speed {
+  background: rgba(110, 70, 0, 0.28);
+  border-color: rgba(210, 155, 0, 0.6);
+  color: #ffcc44;
+  box-shadow: 0 0 12px rgba(200, 140, 0, 0.35), inset 0 1px 0 rgba(255,200,50,0.1);
+}
+
+.hud-divider {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--hud-divider-color) 30%,
+    var(--hud-divider-color) 70%,
+    transparent
+  );
+  flex-shrink: 0;
+}
+
+
+/* ── Slider group ───────────────────────────────────────────── */
+.hud-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+  padding: 0 14px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-value {
+  font-family: var(--font-hud);
+  font-size: var(--slider-val-size);
+  color: var(--slider-val-color);
+  min-width: var(--slider-val-width);
+  text-align: right;
+}
+
+.HUD input[type="range"] {
+  width: var(--slider-width);
+  accent-color: var(--slider-color);
+}
+
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .HUD {
+    flex-direction: column;
+    gap: 10px;
+    bottom: var(--hud-bottom-mobile);
+    padding: var(--hud-pad-mobile);
+    width: calc(100vw - 32px);
+  }
+
+  .hud-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--hud-divider-color) 30%,
+      var(--hud-divider-color) 70%,
+      transparent
+    );
+  }
+
+  .control-group {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+  }
+
+  .btn-row { gap: 6px; }
+
+  .HUD button {
+    font-size: var(--btn-font-size-mobile);
+    padding: var(--btn-pad-mobile);
+  }
+
+  .control-label { font-size: var(--label-font-size-mob); }
+}
