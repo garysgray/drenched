@@ -254,21 +254,36 @@ body {
 
 /* ── Hero text ──────────────────────────────────────────────── */
 .text-stage {
-  position: fixed; inset: 0; z-index: 20;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+
   display: flex;
   align-items: flex-start;
   justify-content: center;
+
   padding-top: var(--text-top);
   padding-left: var(--text-pad-x);
   padding-right: var(--text-pad-x);
+
   pointer-events: none;
+
+  /* KEY FIX — prevents visual clipping illusion */
+  overflow: visible;
 }
 
 .text-wrap {
   position: relative;
+
+  /* KEY FIX — removes fake "box width" */
+  display: inline-block;
+
   text-align: center;
-  animation: text-entrance var(--entrance-duration) cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  animation: text-entrance var(--entrance-duration)
+             cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
 @keyframes text-entrance {
   from {
     opacity: 0;
@@ -291,6 +306,7 @@ body {
   user-select: none;
 }
 
+/* subtle depth shadow (unchanged but cleaner alignment) */
 .shadow-text {
   color: #000;
   position: absolute;
@@ -300,15 +316,20 @@ body {
   opacity: var(--text-shadow-opacity);
 }
 
+/* ✅ FIXED GLOW */
 .main-text {
   color: var(--text-color);
   position: relative;
+
+  /* refined glow — no "box" feel */
   text-shadow:
-    0 0 18px  var(--glow-color),
-    0 0 55px  var(--glow-color),
-    0 0 120px var(--glow-color);
+    0 0 12px  var(--glow-color),
+    0 0 35px  var(--glow-color),
+    0 0 80px  var(--glow-color);
+
   animation: flicker var(--flicker-duration) ease-in-out infinite;
 }
+
 @keyframes flicker {
   0%, 91%, 93%, 100% { opacity: 1; }
   92%                { opacity: var(--flicker-low); }
@@ -319,46 +340,53 @@ body {
   cursor: pointer;
   pointer-events: auto;
 }
+
 #text-toggle:hover .main-text {
   filter: brightness(1.3);
   transition: filter 0.3s ease;
 }
 
-
 /* ── Scroll text ────────────────────────────────────────────── */
 .scroll-left {
   font-family: var(--font-hero);
   position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  overflow: hidden;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+  overflow: visible;
+
+  display: none; /* ✅ DEFAULT OFF */
+}
+
+.scroll-left p {
+  display: inline-block;
   font-size: var(--text-size);
   white-space: nowrap;
   color: var(--text-color);
   text-shadow:
-    0 0 18px  var(--glow-color),
-    0 0 55px  var(--glow-color),
-    0 0 120px var(--glow-color);
-  display: none;
-  pointer-events: auto;
-}
-
-.scroll-left p {
-  display: flex;
-  align-items: flex-start;
+    0 0 12px  var(--glow-color),
+    0 0 35px  var(--glow-color),
+    0 0 80px  var(--glow-color);
   padding-top: var(--text-top);
-  margin: 0;
   transform: translateX(100vw);
   animation: scroll-left var(--scroll-duration) linear infinite;
+  will-change: transform;
 }
+
 @keyframes scroll-left {
   0%   { transform: translateX(100vw); }
   100% { transform: translateX(-100%); }
 }
 
-.text-stage.scrolling .text-wrap   { display: none; }
-.text-stage.scrolling .scroll-left { display: block; }
+/* ✅ PUT THESE RIGHT HERE */
+.text-stage.scrolling .text-wrap {
+  display: none;
+}
 
+.text-stage.scrolling .scroll-left {
+  display: flex;
+}
 
 /* ── HUD ────────────────────────────────────────────────────── */
 .HUD {
