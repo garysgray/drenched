@@ -12,12 +12,12 @@ class TextDisplay
 {
   /**
    * Targets the DOM screen area, grabs the audio reference, and boots the text layouts.
-   * @param {UISounds} audio - The system UI sound module used for button clicks.
+   * @param {AudioManager} audioManager - The system audio manager used for sound playback.
    */
-  constructor(audio)
+  constructor(audioManager)
   {
     this.stage       = document.querySelector('.text-stage'); // The HTML container displaying the text
-    this.audio       = audio;                                 // Reference used to trigger UI click sound effects
+    this.audio       = audioManager;                          // Reference to AudioManager for sound playback
     this.isScrolling = false;                                 // Tracks whether the text is currently moving or still
     this.mainText    = document.querySelector('.main-text');
     this.shadowText  = document.querySelector('.shadow-text');
@@ -125,21 +125,21 @@ class TextDisplay
     // Feature: Clicking directly on the large static display text automatically triggers scroll mode
     document.getElementById('text-toggle').addEventListener('click', () =>
     {
-      this.audio.playClick(); // Fire interactive button feedback sound
+        this.audio.play('ui_click'); // Fire interactive button feedback sound
       this._setMode(true);    // Swap layout state cleanly to scrolling
     });
 
     // Control Box: Handles clicking the explicit "Static Layout" menu button
     document.getElementById('text-mode-static').addEventListener('click', () =>
     {
-      this.audio.playClick();
+      this.audio.play('ui_click');
       this._setMode(false);   // Stop text movement layout
     });
 
     // Control Box: Handles clicking the explicit "Scroll Layout" menu button
     document.getElementById('text-mode-scroll').addEventListener('click', () =>
     {
-      this.audio.playClick();
+      this.audio.play('ui_click');
       this._setMode(true);    // Trigger text movement layout
     });
 

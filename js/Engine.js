@@ -11,8 +11,7 @@ class Engine
   {
     this.audio   = new AudioManager(CONFIG.masterVolume);
     this.visuals = new RainVisuals();
-    this.ui      = new UISounds(this.audio);
-    this.text    = new TextDisplay(this.ui);
+    this.text    = new TextDisplay(this.audio);
     
     // Initialize environment controller (handles rain loop initialization)
     this.environment = new EnvironmentController(this.audio, this.visuals, this.text);
@@ -20,7 +19,7 @@ class Engine
     this.hud = new HUD(
       (id) => this.environment.changeIntensity(id),
       (id) => this.visuals.setColor(id),
-      ()   => this.ui.playClick(),
+      ()   => this.audio.play('ui_click'),
       this.audio
     );
 

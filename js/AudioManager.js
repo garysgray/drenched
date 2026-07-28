@@ -7,6 +7,50 @@
 //
 // Game-specific sound recipes live in separate modules.
 
+// Sound recipe definitions (procedural audio blueprints)
+const SoundRecipes = {
+  ui_click: {
+    bufferSecs: () => CONFIG.audio.clickLenSecs,
+    filters: [{
+      type: 'highpass',
+      frequency: () => CONFIG.audio.clickFilterFreq
+    }],
+    envelope: {
+      peak: () => CONFIG.audio.clickGain,
+      endTime: () => CONFIG.audio.clickDecaySecs
+    }
+  },
+  thunder_crack: {
+    bufferSecs: () => CONFIG.audio.crackLenSecs,
+    filters: null,
+    envelope: (cfg) => ({
+      peak: cfg.crack,
+      attack: CONFIG.audio.crackAttackSecs,
+      endTime: CONFIG.audio.crackDecaySecs
+    })
+  },
+  thunder_rumble_layer: {
+    bufferSecs: (cfg) => cfg.rumbleLen,
+    filters: (intensity) => [
+      {
+        type: 'lowshelf',
+        frequency: CONFIG.audio.rumbleShelfFreq,
+        gain: CONFIG.rumbleShelfGain[intensity]
+      },
+      {
+        type: 'lowpass',
+        frequency: CONFIG.rumbleHiCut[intensity]
+      }
+    ],
+    envelope: (cfg, vol) => ({
+      peak: vol,
+      attack: CONFIG.audio.rumbleAttackSecs,
+      holdAt: CONFIG.audio.rumbleHoldSecs,
+      endTime: cfg.fadeMin + Math.random() * cfg.fadeMax
+    })
+  }
+};
+
 class AudioManager
 {
   constructor(initialVolume = 1)
@@ -27,6 +71,49 @@ class AudioManager
     this._maxPoolSize = 12; // Maximum concurrent thunder layers/UI sounds allowed
 
     this._initNodePools();
+  }
+
+  /**
+   * Unified sound playback interface
+   * @param {string} assetKey - Key from SoundRecipes
+   * @param {object} params - Recipe-specific parameters
+   * @param {number|null} customStartTime - Optional AudioContext timestamp
+   */
+  play(assetKey, params = {}, customStartTime = null) {
+    const recipe = SoundRecipes[assetKey];
+    if (!recipe) {
+      console.error(`Unknown sound asset: ${assetKey}`);
+      return;
+    }
+
+    // Unpack helpers to resolve static values or factory function values dynamically
+    const resolveValue = (val, ...args) => typeof val === 'function' ? val(...args) : val;
+
+    const bufferSecs = resolveValue(recipe.bufferSecs, params);
+    const buffer = AudioManager.createNoiseBuffer(this.ctx, bufferSecs);
+
+    // Resolve filter configurations and any inner functional parameters deeply
+    let filterConfigs = resolveValue(recipe.filters, params);
+    if (filterConfigs) {
+      filterConfigs = (Array.isArray(filterConfigs) ? filterConfigs : [filterConfigs]).map(f => ({
+        type: f.type,
+        frequency: resolveValue(f.frequency, params),
+        Q: resolveValue(f.Q, params),
+        gain: resolveValue(f.gain, params)
+      }));
+    }
+
+    // Resolve envelope parameters cleanly
+    const rawEnv = resolveValue(recipe.envelope, params);
+    const envelope = {
+      peak: resolveValue(rawEnv?.peak, params),
+      attack: resolveValue(rawEnv?.attack, params),
+      holdAt: resolveValue(rawEnv?.holdAt, params),
+      endTime: resolveValue(rawEnv?.endTime, params),
+      startTime: customStartTime || this.ctx.currentTime
+    };
+
+    this.playOneShot(buffer, filterConfigs, envelope);
   }
 
   /**

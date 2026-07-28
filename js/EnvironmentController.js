@@ -78,16 +78,7 @@ class EnvironmentController
   // Audio effect methods (moved from RainSounds)
   _playCrack(now, cfg) 
   {
-    const a = CONFIG.audio;
-    const buf = AudioManager.createNoiseBuffer(this.audio.ctx, a.crackLenSecs);
-    
-    this.audio.playOneShot(buf, null, 
-    {
-      peak: cfg.crack,
-      attack: a.crackAttackSecs,
-      endTime: a.crackDecaySecs,
-      startTime: now
-    });
+    this.audio.play('thunder_crack', cfg, now);
   }
 
   _playRumble(now, cfg, intensity) 
@@ -98,19 +89,16 @@ class EnvironmentController
     for (let l = 0; l < layerCount; l++) 
     {
       const offset = l * (a.rumbleLayerOffset + Math.random() * a.rumbleLayerRand);
-      const buf = AudioManager.createNoiseBuffer(this.audio.ctx, cfg.rumbleLen);
       const vol = cfg.rumble / layerCount * (a.rumbleVolRandMin + Math.random() * a.rumbleVolRandMax);
       
-      this.audio.playOneShot(buf, [
-        { type: 'lowshelf', frequency: a.rumbleShelfFreq, gain: CONFIG.rumbleShelfGain[intensity] },
-        { type: 'lowpass', frequency: CONFIG.rumbleHiCut[intensity] }
-      ], {
-        peak: vol,
-        attack: a.rumbleAttackSecs,
-        holdAt: a.rumbleHoldSecs,
-        endTime: cfg.fadeMin + Math.random() * cfg.fadeMax,
-        startTime: now + offset
-      });
+      this.audio.play('thunder_rumble_layer', 
+      {
+        rumbleLen: cfg.rumbleLen,
+        fadeMin: cfg.fadeMin,
+        fadeMax: cfg.fadeMax,
+        intensity: intensity
+      }, 
+      now + offset);
     }
   }
 
@@ -122,7 +110,8 @@ class EnvironmentController
     const { min, range } = CONFIG.thunderDelay[intensity];
     const delay = min + Math.random() * range;
     
-    this.thunderTimer = setTimeout(() => {
+    this.thunderTimer = setTimeout(() => 
+    {
       this._executeStormStrike(intensity);
       this._scheduleNextStrike(intensity); // Loop
     }, delay);
