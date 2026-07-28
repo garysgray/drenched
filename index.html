@@ -50,6 +50,15 @@
       <button id="text-mode-scroll">Scroll</button>
     </div>
   </div>
+  <div class="hud-divider"></div>
+  <div class="hud-slider-group">
+    <span class="control-label">Volume</span>
+    <div class="slider-row">
+      <button id="mute-btn">Mute</button>
+      <input type="range" id="master-volume" min="0" max="100" value="100" step="1">
+      <span class="slider-value" id="master-volume-val">100%</span>
+    </div>
+  </div>
   <div class="hud-divider" id="scroll-speed-divider"></div>
 <div class="hud-slider-group" id="scroll-speed-group" style="display:none;">
   <span class="control-label">Scroll Speed</span>
@@ -60,7 +69,9 @@
 </div>
 </div>
 <script src="js/Config.js"></script>
-<script src="js/RainAudio.js"></script>
+<script src="js/AudioManager.js"></script>
+<script src="js/UISounds.js"></script> 
+<script src="js/RainSounds.js"></script>
 <script src="js/RainVisuals.js"></script>
 <script src="js/TextDisplay.js"></script>
 <script src="js/Hud.js"></script>

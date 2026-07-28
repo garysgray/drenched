@@ -22,7 +22,7 @@
   --dur-straight:        0.28s;
   --dur-rev:             0.18s;
 
-  /* Lightning flash strengths — overwritten by JS */
+  /* Lightning flash strengths — legacy tokens, no longer driven by CSS animation */
   --lightning-a:         0.0;
   --lightning-b:         0.0;
 
@@ -53,8 +53,6 @@
 
   /* Lightning */
   --lightning-color:     #d8eeff;
-  --lightning-cycle:     5s;
-  --lightning-delay:     1s;
 
   /* Fog */
   --fog-drift-duration:  14s;
@@ -203,18 +201,11 @@ body {
 
 
 /* ── Lightning ──────────────────────────────────────────────── */
+/* Opacity is driven by RainVisuals.flashLightning() on each thunder strike. */
 #lightning {
   position: fixed; inset: 0; z-index: 5; pointer-events: none;
   background: var(--lightning-color);
   opacity: 0;
-  animation: bolt var(--lightning-cycle) var(--lightning-delay) linear infinite;
-}
-@keyframes bolt {
-  0%,  7%   { opacity: 0; }
-  8%        { opacity: var(--lightning-a); }
-  9%,  11%  { opacity: 0; }
-  12%       { opacity: var(--lightning-b); }
-  13%, 100% { opacity: 0; }
 }
 
 
@@ -268,14 +259,12 @@ body {
 
   pointer-events: none;
 
-  /* KEY FIX — prevents visual clipping illusion */
   overflow: visible;
 }
 
 .text-wrap {
   position: relative;
 
-  /* KEY FIX — removes fake "box width" */
   display: inline-block;
 
   text-align: center;
@@ -306,7 +295,6 @@ body {
   user-select: none;
 }
 
-/* subtle depth shadow (unchanged but cleaner alignment) */
 .shadow-text {
   color: #000;
   position: absolute;
@@ -316,12 +304,10 @@ body {
   opacity: var(--text-shadow-opacity);
 }
 
-/* ✅ FIXED GLOW */
 .main-text {
   color: var(--text-color);
   position: relative;
 
-  /* refined glow — no "box" feel */
   text-shadow:
     0 0 12px  var(--glow-color),
     0 0 35px  var(--glow-color),
@@ -356,7 +342,7 @@ body {
   pointer-events: auto;
   overflow: visible;
 
-  display: none; /* ✅ DEFAULT OFF */
+  display: none; 
 }
 
 .scroll-left p {
@@ -379,7 +365,6 @@ body {
   100% { transform: translateX(-100%); }
 }
 
-/* ✅ PUT THESE RIGHT HERE */
 .text-stage.scrolling .text-wrap {
   display: none;
 }
@@ -403,7 +388,7 @@ body {
   padding: var(--hud-pad);
   backdrop-filter: blur(var(--hud-blur));
   box-shadow: var(--hud-shadow);
-  opacity: 0; /* JS drives opacity from here */
+  opacity: 0; 
 }
 
 .control-group {
