@@ -18,12 +18,14 @@
 <div id="scanlines"></div>
 <div id="vignette"></div>
 <canvas id="noise"></canvas>
+
 <div class="text-stage">
   <div class="text-wrap" id="text-toggle" title="click me">
     <div class="shadow-text">It was a Dark and Stormy Night!!!</div>
     <div class="main-text">It was a Dark and Stormy Night!!!</div>
   </div>
 </div>
+
 <div class="HUD">
   <div class="control-group">
     <span class="control-label">Text Color</span>
@@ -33,7 +35,9 @@
       <button id="blue">Blue</button>
     </div>
   </div>
+  
   <div class="hud-divider"></div>
+  
   <div class="control-group">
     <span class="control-label">Rain Intensity</span>
     <div class="btn-row">
@@ -42,7 +46,9 @@
       <button id="fast">Torrent</button>
     </div>
   </div>
+  
   <div class="hud-divider"></div>
+  
   <div class="control-group">
     <span class="control-label">Text Mode</span>
     <div class="btn-row">
@@ -50,7 +56,9 @@
       <button id="text-mode-scroll">Scroll</button>
     </div>
   </div>
+  
   <div class="hud-divider"></div>
+  
   <div class="hud-slider-group">
     <span class="control-label">Volume</span>
     <div class="slider-row">
@@ -59,19 +67,33 @@
       <span class="slider-value" id="master-volume-val">100%</span>
     </div>
   </div>
+  
   <div class="hud-divider" id="scroll-speed-divider"></div>
-<div class="hud-slider-group" id="scroll-speed-group" style="display:none;">
-  <span class="control-label">Scroll Speed</span>
-  <div class="slider-row">
-    <input type="range" id="scroll-speed" min="5" max="40" value="20" step="1">
-    <span class="slider-value" id="scroll-speed-val">20s</span>
+  
+  <div class="hud-slider-group" id="scroll-speed-group" style="display:none;">
+    <span class="control-label">Scroll Speed</span>
+    <div class="slider-row">
+      <input type="range" id="scroll-speed" min="5" max="40" value="20" step="1">
+      <span class="slider-value" id="scroll-speed-val">20s</span>
+    </div>
   </div>
-</div>
-</div>
+
+  <!-- NEW: Clean GitHub Link Area -->
+  <div class="hud-divider"></div>
+  <div class="hud-group github-group">
+    <a href="https://github.com/garysgray/drenched" target="_blank" class="github-link" aria-label="View Source on GitHub">
+      <svg class="github-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+        <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82A7.423 7.423 0 0 0 8 3c-.68 0-1.36.09-2 .28-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/>
+      </svg>
+      <span>View Source</span>
+    </a>
+  </div>
+</div> <!-- /HUD -->
+
 <script src="js/Config.js"></script>
 <script src="js/AudioManager.js"></script>
 <script src="js/UISounds.js"></script> 
-<script src="js/RainSounds.js"></script>
+<script src="js/EnvironmentController.js"></script>
 <script src="js/RainVisuals.js"></script>
 <script src="js/TextDisplay.js"></script>
 <script src="js/Hud.js"></script>

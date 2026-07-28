@@ -121,6 +121,11 @@
 
   /* Responsive breakpoint */
   --bp-mobile:           640px;
+
+  /* GitHub Link specific design tokens */
+  --git-icon-gap:        6px;
+  --git-font-size:       10px;
+  --git-font-size-mob:   11px;
 }
 
 
@@ -535,4 +540,26 @@ button.active-speed {
   }
 
   .control-label { font-size: var(--label-font-size-mob); }
+}
+
+/* ── HUD Footer & GitHub Link ────────────────────────────────── */
+.hud-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.github-link {
+  color: var(--text-color, #ffffff);
+  font-family: 'Special Elite', monospace;
+  font-size: 0.75rem;
+  text-decoration: none;
+  opacity: 0.4;
+  transition: opacity 0.2s ease, text-shadow 0.2s ease;
+}
+
+.github-link:hover {
+  opacity: 0.9;
+  text-shadow: 0 0 4px var(--glow-color, rgba(215, 0, 0, 0.5));
 }
