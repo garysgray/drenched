@@ -86,13 +86,11 @@ class AudioManager
       return;
     }
 
-    // Unpack helpers to resolve static values or factory function values dynamically
     const resolveValue = (val, ...args) => typeof val === 'function' ? val(...args) : val;
 
     const bufferSecs = resolveValue(recipe.bufferSecs, params);
     const buffer = AudioManager.createNoiseBuffer(this.ctx, bufferSecs);
 
-    // Resolve filter configurations and any inner functional parameters deeply
     let filterConfigs = resolveValue(recipe.filters, params);
     if (filterConfigs) {
       filterConfigs = (Array.isArray(filterConfigs) ? filterConfigs : [filterConfigs]).map(f => ({
@@ -103,15 +101,17 @@ class AudioManager
       }));
     }
 
-    // Resolve envelope parameters cleanly
     const rawEnv = resolveValue(recipe.envelope, params);
     const envelope = {
-      peak: resolveValue(rawEnv?.peak, params),
-      attack: resolveValue(rawEnv?.attack, params),
-      holdAt: resolveValue(rawEnv?.holdAt, params),
-      endTime: resolveValue(rawEnv?.endTime, params),
+      peak: resolveValue(rawEnv.peak, params),
+      attack: resolveValue(rawEnv.attack, params),
+      holdAt: resolveValue(rawEnv.holdAt, params),
+      endTime: resolveValue(rawEnv.endTime, params),
       startTime: customStartTime || this.ctx.currentTime
     };
+
+    // Telemetry log safely positioned after properties are fully unpacked:
+    console.log(`[AUDIO] ${assetKey} scheduled=${envelope.startTime.toFixed(4)}s bufferSecs=${bufferSecs.toFixed(3)}`);
 
     this.playOneShot(buffer, filterConfigs, envelope);
   }

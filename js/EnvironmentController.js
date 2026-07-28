@@ -55,22 +55,31 @@ class EnvironmentController
   {
     const cfg = CONFIG.thunderCfg[intensity];
     const a = CONFIG.audio;
+    if (!cfg) return;
+
+    // 1. Anchor to the exact unshakeable Web Audio hardware clock
     const now = this.audio.ctx.currentTime;
-    
-    // Shared payload for visual/text sync
-    const payload = 
-    {
-      intensity,
+
+    const payload = {
       crack: cfg.crack,
       attackSecs: a.crackAttackSecs,
       decaySecs: a.crackDecaySecs
     };
-    
-    // Instant visual/text effects
-    this.visuals.flashLightning(payload);
-    this.text.flashFont(payload);
-    
-    // Audio timeline
+
+    // 2. Telemetry Log
+    console.log(`[STRIKE] perf=${performance.now().toFixed(2)}ms audioCtx=${now.toFixed(4)}s intensity=${intensity}`);
+
+    // 3. Force both visual render steps to execute on the exact same monitor paint cycle
+    requestAnimationFrame(() => {
+      if (this.visuals && typeof this.visuals.flashLightning === 'function') {
+        this.visuals.flashLightning(payload);
+      }
+      if (this.text && typeof this.text.flashFont === 'function') {
+        this.text.flashFont(payload);
+      }
+    });
+
+    // 4. Fire audio one-shots locked precisely to our hardware clock timeline
     this._playCrack(now, cfg);
     this._playRumble(now, cfg, intensity);
   }

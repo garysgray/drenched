@@ -47,6 +47,8 @@ class TextDisplay
    */
   flashFont({ crack, attackSecs, decaySecs })
   {
+    console.log(`[TEXT] flashStart=${performance.now().toFixed(2)}ms ` +
+                `peak=${Math.min(1, crack).toFixed(2)} attack=${attackSecs}s`);
     clearTimeout(this._fontFlashTimer);
 
     const peak           = Math.min(1, crack);
