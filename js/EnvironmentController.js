@@ -40,11 +40,7 @@ class EnvironmentController
     this.visuals.setIntensity(id);
     
     // Update audio levels
-    this.audio.setLoopGain(
-      'rain',
-      CONFIG.rainLevels[id],
-      CONFIG.audio.rainGainFadeTime
-    );
+    this.audio.setLoopGain('rain', CONFIG.rainLevels[id], CONFIG.audio.rainGainFadeTime);
     
     // Reset thunder scheduling
     this._scheduleNextStrike(id);
@@ -69,15 +65,17 @@ class EnvironmentController
     // 2. Telemetry Log
     console.log(`[STRIKE] perf=${performance.now().toFixed(2)}ms audioCtx=${now.toFixed(4)}s intensity=${intensity}`);
 
-    // 3. Force both visual render steps to execute on the exact same monitor paint cycle
-    requestAnimationFrame(() => {
-      if (this.visuals && typeof this.visuals.flashLightning === 'function') {
-        this.visuals.flashLightning(payload);
-      }
-      if (this.text && typeof this.text.flashFont === 'function') {
-        this.text.flashFont(payload);
-      }
-    });
+    // 3. FIXED: Stripped requestAnimationFrame wrapper. 
+    // Firing these instantly ensures the lightning and font styles inject 
+    // onto the page at the exact same millisecond the audio context is triggered.
+    if (this.visuals && typeof this.visuals.flashLightning === 'function') 
+    {
+      this.visuals.flashLightning(payload);
+    }
+    if (this.text && typeof this.text.flashFont === 'function') 
+    {
+      this.text.flashFont(payload);
+    }
 
     // 4. Fire audio one-shots locked precisely to our hardware clock timeline
     this._playCrack(now, cfg);
@@ -90,6 +88,7 @@ class EnvironmentController
     this.audio.play('thunder_crack', cfg, now);
   }
 
+  // Audio effect methods (moved from RainSounds)
   _playRumble(now, cfg, intensity) 
   {
     const a = CONFIG.audio;

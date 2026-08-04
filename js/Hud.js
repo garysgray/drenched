@@ -4,109 +4,118 @@
 //   - Entrance animation (JS driven, no CSS animation)
 //   - Auto-hide after idle timeout
 //   - Cursor hide/show in sync with HUD
-//   - Intensity and color button listeners with click sound
-//   - Master volume slider and mute toggle
+//   - Master volume slider and mute toggle visual state management
 //
 // Depends on: CONFIG (config.js)
 
 class HUD
 {
   /**
-   * Targets the DOM HUD wrapper, caches system callbacks, and initializes interface states.
-   * @param {Function} onIntensityChange - Callback fired when a weather speed button is pressed.
-   * @param {Function} onColorChange - Callback fired when a lighting color button is pressed.
-   * @param {Function} onClickSound - Callback pointing directly to the UI click sound trigger.
-   * @param {AudioManager} audio - The initialized master audio context core engine.
+   * Targets the DOM HUD wrapper, caches references, and initializes interface states.
+   * No longer accepts callbacks or binds mouse events directly.
    */
-  constructor(onIntensityChange, onColorChange, onClickSound, audio)
+  constructor()
   {
-    this.el                = document.querySelector('.HUD'); // The floating main interface window
-    this.hideTimer         = null;                           // Holds the active idle countdown timer handle
-    this.onIntensityChange = onIntensityChange;
-    this.onColorChange     = onColorChange;
-    this.onClickSound      = onClickSound;
-    this.audio             = audio;                          // Used to manage volume adjustment parameters
+    this.el        = document.querySelector('.HUD'); // The floating main interface window
+    this.hideTimer = null;                           // Holds the active idle countdown timer handle
 
-    this._bindButtons();   // Hook up mouse click listeners to weather options
-    this._bindVolume();    // Hook up sliders and mute buttons to the audio core
+    // Cache references to the interactive controls so the Engine can manipulate them
+    this.slider      = document.getElementById('scroll-speed');
+    this.label       = document.getElementById('scroll-speed-val');
+    this.volSlider   = document.getElementById('master-volume');
+    this.volLabel    = document.getElementById('master-volume-val');
+    this.muteBtn     = document.getElementById('mute-btn');
+
     this._initAutoHide();  // Fire up the interface tracking idle hide timers
   }
 
   /**
-   * Loops through and binds mouse listeners to the storm speed and background color buttons.
+   * NEW ENGINE INTERFACE: Handles the visual wipeout and highlight for weather speed buttons.
    */
-  _bindButtons()
+  syncSpeedButtonUI(activeId) 
   {
-    // Weather Speed Group: Controls how fast/heavy the rain loop runs
-    ['slow', 'med', 'fast'].forEach(id =>
-    {
-      document.getElementById(id).addEventListener('click', () =>
-      {
-        this.onClickSound(); // Play crisp menu click audio feedback
-        
-        // Strip active CSS styling highlights off all sibling speed buttons
-        ['slow', 'med', 'fast'].forEach(b => document.getElementById(b).className = '');
-        
-        document.getElementById(id).className = 'active-speed'; // Add highlight to the clicked button
-        this.onIntensityChange(id);                              // Notify the main Engine about the new weather level
-      });
-    });
-
-    // Scene Color Group: Controls the color profile filters on screen
-    ['red', 'green', 'blue'].forEach(id =>
-    {
-      document.getElementById(id).addEventListener('click', () =>
-      {
-        this.onClickSound();
-        
-        // Strip custom styling classes off all sibling color buttons
-        ['red', 'green', 'blue'].forEach(b => document.getElementById(b).className = '');
-        
-        // Inject custom configuration class names defined inside your config.js file
-        document.getElementById(id).className = CONFIG.colors[id].cls;
-        this.onColorChange(id);                                  // Notify the main Engine about the color layer update
-      });
-    });
+    ['slow', 'med', 'fast'].forEach(b => document.getElementById(b).className = '');
+    document.getElementById(activeId).className = 'active-speed';
   }
 
   /**
-   * Synchronizes the volume HTML slider and mute button with the current AudioManager engine state.
+   * NEW ENGINE INTERFACE: Handles the visual wipeout and lookup injection for color buttons.
    */
-  _bindVolume()
+  syncColorButtonUI(activeId) 
   {
-    const slider  = document.getElementById('master-volume');
-    const label   = document.getElementById('master-volume-val');
-    const muteBtn = document.getElementById('mute-btn');
-
-    // Seed starting positions. Translates math ranges (0.0–1.0) into visual percentage integers (0–100)
-    slider.value = Math.round(CONFIG.masterVolume * 100);
-    label.textContent = `${slider.value}%`;
-    this._updateMuteButton(muteBtn); // Ensure the mute toggle visual label is drawn accurately
-
-    // Listener: Monitors when the user clicks and drags the volume slider thumb bar
-    slider.addEventListener('input', () =>
-    {
-      const val = slider.value / 100; // Convert 0-100 integer bounds back down to Web Audio API floating ranges (0.0-1.0)
-      this.audio.setMasterVolume(val); // Change speaker nodes intensity level dynamically
-      label.textContent = `${slider.value}%`; // Synchronize text percentage readout label on screen
-    });
-
-    // Listener: Watches for physical button interaction on the system master mute switch
-    muteBtn.addEventListener('click', () =>
-    {
-      this.onClickSound();
-      this.audio.toggleMute();         // Call the core system mute equation rules
-      this._updateMuteButton(muteBtn); // Force UI labels to instantly redetermine active wording/styles
-    });
+    ['red', 'green', 'blue'].forEach(b => document.getElementById(b).className = '');
+    document.getElementById(activeId).className = CONFIG.colors[activeId].cls;
   }
 
   /**
-   * Helper that checks live AudioManager properties to accurately alter text labels and styling layouts.
+   * NEW ENGINE INTERFACE: Syncs the text mode button highlights and opens/closes the slider panel.
    */
-  _updateMuteButton(btn)
+  syncTextMenuSlider(isScrolling) 
   {
-    btn.className     = this.audio.muted ? 'active-speed' : ''; // Highlight button red/active if system is muted
-    btn.textContent   = this.audio.muted ? 'Unmute' : 'Mute';   // Dynamically swap display text phrasing
+    const staticBtn = document.getElementById('text-mode-static');
+    const scrollBtn = document.getElementById('text-mode-scroll');
+    const speedGroup = document.getElementById('scroll-speed-group');
+    const divider = document.getElementById('scroll-speed-divider');
+
+    if (staticBtn) staticBtn.className = isScrolling ? '' : 'active-speed';
+    if (scrollBtn) scrollBtn.className = isScrolling ? 'active-speed' : '';
+    if (speedGroup) speedGroup.style.display = isScrolling ? 'flex' : 'none';
+    if (divider) divider.style.display = isScrolling ? 'block' : 'none';
+  }
+
+  /**
+   * NEW ENGINE INTERFACE: Setup initial text scroll slider bounds using values directly from config.js
+   */
+  initScrollSlider() 
+  {
+    if (this.slider) {
+      this.slider.min   = CONFIG.scroll.minSpeedSecs;
+      this.slider.max   = CONFIG.scroll.maxSpeedSecs;
+      this.slider.value = CONFIG.scroll.defaultSpeedSecs;
+      this.updateSliderLabel();
+    }
+  }
+
+  /**
+   * NEW ENGINE INTERFACE: Updates the visual duration numbers label next to the scroll speed bar.
+   */
+  updateSliderLabel() 
+  {
+    if (this.label && this.slider) {
+      this.label.textContent = `${this.slider.value}s`;
+    }
+  }
+
+  /**
+   * NEW ENGINE INTERFACE: Seed starting volume layout numbers based on configurations.
+   */
+  initVolumeUI()
+  {
+    if (this.volSlider && this.volLabel) {
+      this.volSlider.value = Math.round(CONFIG.masterVolume * 100);
+      this.volLabel.textContent = `${this.volSlider.value}%`;
+    }
+  }
+
+  /**
+   * NEW ENGINE INTERFACE: Instantly synchronizes the text percentage readout label on screen.
+   */
+  updateVolumeLabel()
+  {
+    if (this.volLabel && this.volSlider) {
+      this.volLabel.textContent = `${this.volSlider.value}%`;
+    }
+  }
+
+  /**
+   * ENGINE INTERFACE: Checks system properties to accurately alter text labels and styling layouts.
+   */
+  updateMuteButtonVisuals(isMuted)
+  {
+    if (this.muteBtn) {
+      this.muteBtn.className   = isMuted ? 'active-speed' : ''; // Highlight button red/active if system is muted
+      this.muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';   // Dynamically swap display text phrasing
+    }
   }
 
   /**

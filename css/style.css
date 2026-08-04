@@ -317,8 +317,6 @@ body {
     0 0 12px  var(--glow-color),
     0 0 35px  var(--glow-color),
     0 0 80px  var(--glow-color);
-
-  animation: flicker var(--flicker-duration) ease-in-out infinite;
 }
 
 @keyframes flicker {
@@ -543,14 +541,18 @@ button.active-speed {
 }
 
 /* ── HUD Footer & GitHub Link ────────────────────────────────── */
-.hud-footer {
+.github-group {
   display: flex;
   justify-content: center;
   align-items: center;
   padding-top: 4px;
+  width: 100%;
 }
 
 .github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-color, #ffffff);
   font-family: 'Special Elite', monospace;
   font-size: 0.75rem;
@@ -562,4 +564,13 @@ button.active-speed {
 .github-link:hover {
   opacity: 0.9;
   text-shadow: 0 0 4px var(--glow-color, rgba(215, 0, 0, 0.5));
+}
+
+.github-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.github-link:hover .github-icon {
+  transform: scale(1.1);
 }

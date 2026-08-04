@@ -4,35 +4,42 @@
 // together. Only place that knows about all systems at once.
 //
 // Depends on: CONFIG, AudioManager, RainSounds, RainVisuals, TextDisplay, HUD
+//
+// Why this exists:
+// The Engine class acts as the central coordinator for all game subsystems.
+// It initializes and connects audio, visuals, text display, and the HUD,
+// ensuring they work together seamlessly. This avoids tight coupling between
+// subsystems while providing a single point of control.
 
-class Engine
+class Engine 
 {
-  constructor()
+  constructor() 
   {
-    this.audio   = new AudioManager(CONFIG.masterVolume);
-    this.visuals = new RainVisuals();
-    this.text    = new TextDisplay(this.audio);
+    // Initialize core logic subsystems
+    this.audio       = new AudioManager(CONFIG.masterVolume);
+    this.visuals     = new RainVisuals();
+    this.environment = new EnvironmentController(this.audio, this.visuals, null); // We will link text next
+
+    // Initialize the Unified UI Layer and let it do all the lifting
+    this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
-    // Initialize environment controller (handles rain loop initialization)
-    this.environment = new EnvironmentController(this.audio, this.visuals, this.text);
+    // Wire the text component into the environment controller now that UI built it
+    this.environment.textDisplay = this.ui.text;
 
-    this.hud = new HUD(
-      (id) => this.environment.changeIntensity(id),
-      (id) => this.visuals.setColor(id),
-      ()   => this.audio.play('ui_click'),
-      this.audio
-    );
-
-    // Resume AudioContext on first user interaction
+    // Unblock browser sound restriction on the first click
     document.addEventListener('click', () => this.audio.resume(), { once: true });
   }
 
+  /**
+   * Fires up the simulation state on load.
+   */
   start(intensityId, colorId)
   {
+    // Apply default physics engine states
     this.environment.changeIntensity(intensityId);
     this.visuals.setColor(colorId);
 
-    document.getElementById(intensityId).className = 'active-speed';
-    document.getElementById(colorId).className     = CONFIG.colors[colorId].cls;
+    // Command the UI object to sync its visual layouts to match those starting settings
+    this.ui.initLayoutStates(intensityId, colorId);
   }
 }

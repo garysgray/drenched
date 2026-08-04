@@ -6,55 +6,89 @@
 //   - Safe, popping-free one-shot playback and loop channel management
 //
 // Game-specific sound recipes live in separate modules.
+//
+// Why this exists:
+// The AudioManager handles all audio operations in the game, providing a clean
+// abstraction over the Web Audio API. It manages sound effects, music, and
+// audio processing while preventing common issues like audio popping and
+// configuration clicks. The static node pooling system improves performance
+// by reusing audio nodes instead of creating new ones for each sound.
 
 // Sound recipe definitions (procedural audio blueprints)
-const SoundRecipes = {
-  ui_click: {
+// These define the exact volume, filters, and timing shapes for every synthesized sound effect.
+const SoundRecipes = 
+{
+  // UI CLICK: A sharp, crisp button sound that pops instantly and ends quickly
+  ui_click: 
+  {
+    // The total length of the raw sound buffer file generated in seconds
     bufferSecs: () => CONFIG.audio.clickLenSecs,
+    
+    // Filters modify the tone: 'highpass' cuts out bass frequencies to keep the click sounding light and crisp
     filters: [{
       type: 'highpass',
-      frequency: () => CONFIG.audio.clickFilterFreq
+      frequency: () => CONFIG.audio.clickFilterFreq // The frequency boundary line where bass is cut off
     }],
-    envelope: {
-      peak: () => CONFIG.audio.clickGain,
-      endTime: () => CONFIG.audio.clickDecaySecs
+    
+    // The Volume Shape (Envelope) controls how the sound fades over time
+    envelope: 
+    {
+      peak: () => CONFIG.audio.clickGain,          // peak = The maximum loudness volume (0.0 to 1.0) this click reaches
+      endTime: () => CONFIG.audio.clickDecaySecs    // endTime = The exact second marks when the click must hit 0 volume and stop
     }
   },
-  thunder_crack: {
+
+  // THUNDER CRACK: The immediate, explosive visual lightning strike blast
+  thunder_crack: 
+  {
+    // The length of this audio block in seconds
     bufferSecs: () => CONFIG.audio.crackLenSecs,
-    filters: null,
+    
+    filters: null, // No tone filters needed; plays raw, harsh white noise static for maximum impact
+    
+    // Pass in custom settings (cfg) to dynamically adjust volume based on how close the lightning is
     envelope: (cfg) => ({
-      peak: cfg.crack,
-      attack: CONFIG.audio.crackAttackSecs,
-      endTime: CONFIG.audio.crackDecaySecs
+      peak: cfg.crack,                       // peak = The maximum blast volume, calculated dynamically per lightning flash
+      attack: CONFIG.audio.crackAttackSecs,  // attack = Fade-in speed. Set to near-zero so the sound explodes instantly
+      endTime: CONFIG.audio.crackDecaySecs   // endTime = The exact lifespan in seconds when the explosion trailing echo dies out
     })
   },
-  thunder_rumble_layer: {
+
+  // THUNDER RUMBLE LAYER: The deep, muffled background rolling vibrations that echo after a crack
+  thunder_rumble_layer: 
+  {
+    // The duration of the low-end roll, passed in dynamically from the engine physics
     bufferSecs: (cfg) => cfg.rumbleLen,
+    
+    // A list of two audio filters working together to shape the tone
     filters: (intensity) => [
       {
-        type: 'lowshelf',
+        type: 'lowshelf', // lowshelf = A bass-booster node that amplifies low vibrations
         frequency: CONFIG.audio.rumbleShelfFreq,
-        gain: CONFIG.rumbleShelfGain[intensity]
+        gain: CONFIG.rumbleShelfGain[intensity] // Pulls a bass volume multiplier out of config based on current rain speed
       },
       {
-        type: 'lowpass',
+        type: 'lowpass',  // lowpass = A muffler node. It blocks high frequencies, making the rumble sound distant and deep
         frequency: CONFIG.rumbleHiCut[intensity]
       }
     ],
+    
+    // The shape of the rumbling volume over time
     envelope: (cfg, vol) => ({
-      peak: vol,
-      attack: CONFIG.audio.rumbleAttackSecs,
-      holdAt: CONFIG.audio.rumbleHoldSecs,
-      endTime: cfg.fadeMin + Math.random() * cfg.fadeMax
+      peak: vol,                              // peak = The maximum volume limit for this specific rolling wave
+      attack: CONFIG.audio.rumbleAttackSecs,  // attack = Fade-in speed. Takes seconds to slowly swell up like real distance sound
+      holdAt: CONFIG.audio.rumbleHoldSecs,    // holdAt = Sustain duration. How many seconds to lock the volume at its max loudness
+      endTime: cfg.fadeMin + Math.random() * cfg.fadeMax // endTime = Total duration. Adds a random roll so each rumble lasts a unique length
     })
   }
 };
+
 
 class AudioManager
 {
   constructor(initialVolume = 1)
   {
+    // Create the main audio context
     this.ctx            = new AudioContext();
     this.muted          = false;
     this._preMuteVolume = initialVolume;
@@ -65,11 +99,13 @@ class AudioManager
     this.masterGain.gain.value = initialVolume;
     this.masterGain.connect(this.ctx.destination);
 
-    // FIX: Pre-allocate static channels so the browser doesn't pop when connecting nodes at runtime
+    // Pre-allocate static channels to prevent audio popping
+    // This creates a pool of reusable audio nodes that are always connected
     this._loops = {};
     this._oneShotPool = [];
     this._maxPoolSize = 12; // Maximum concurrent thunder layers/UI sounds allowed
 
+    // Initialize the node pools
     this._initNodePools();
   }
 
@@ -79,20 +115,30 @@ class AudioManager
    * @param {object} params - Recipe-specific parameters
    * @param {number|null} customStartTime - Optional AudioContext timestamp
    */
-  play(assetKey, params = {}, customStartTime = null) {
+
+  play(assetKey, params = {}, customStartTime = null) 
+  {
+    // Look up the specific "cooking recipe" for this sound (e.g., 'ui_click' or 'raindrop')
     const recipe = SoundRecipes[assetKey];
-    if (!recipe) {
+    if (!recipe) 
+    {
       console.error(`Unknown sound asset: ${assetKey}`);
       return;
     }
 
+    // THE WEIRD SYNTAX: A smart checker. If a recipe setting is a function, run it. 
+    // If it's just a raw number/value, use it as-is.
     const resolveValue = (val, ...args) => typeof val === 'function' ? val(...args) : val;
 
+    //  Figure out how long the audio clip needs to be, then generate a blank bucket of random static noise
     const bufferSecs = resolveValue(recipe.bufferSecs, params);
     const buffer = AudioManager.createNoiseBuffer(this.ctx, bufferSecs);
 
+    //  Look up audio filter rules (like lowpass/highpass to make thunder sound deep or rain sound crisp)
     let filterConfigs = resolveValue(recipe.filters, params);
-    if (filterConfigs) {
+    if (filterConfigs) 
+    {
+      // Force filters into a list format and calculate their frequency, resonance (Q), and volume adjustments
       filterConfigs = (Array.isArray(filterConfigs) ? filterConfigs : [filterConfigs]).map(f => ({
         type: f.type,
         frequency: resolveValue(f.frequency, params),
@@ -101,26 +147,32 @@ class AudioManager
       }));
     }
 
+    //  Look up the "Volume Envelope" (how fast the sound fades in, how long it holds, and how it fades out)
     const rawEnv = resolveValue(recipe.envelope, params);
-    const envelope = {
-      peak: resolveValue(rawEnv.peak, params),
-      attack: resolveValue(rawEnv.attack, params),
-      holdAt: resolveValue(rawEnv.holdAt, params),
-      endTime: resolveValue(rawEnv.endTime, params),
-      startTime: customStartTime || this.ctx.currentTime
+    const envelope = 
+    {
+      peak: resolveValue(rawEnv.peak, params),      // Maximum loudness
+      attack: resolveValue(rawEnv.attack, params),  // Fade-in time (seconds)
+      holdAt: resolveValue(rawEnv.holdAt, params),  // Duration at peak volume
+      endTime: resolveValue(rawEnv.endTime, params),// Fade-out time (seconds)
+      startTime: customStartTime || this.ctx.currentTime // Play right now, or at a specific scheduled frame
     };
 
-    // Telemetry log safely positioned after properties are fully unpacked:
+    //  Print a debug log to the browser console showing exactly when this noise scheduled itself
     console.log(`[AUDIO] ${assetKey} scheduled=${envelope.startTime.toFixed(4)}s bufferSecs=${bufferSecs.toFixed(3)}`);
 
+    //  Fire the synthesizers! Feed the random static noise through the filters and volume envelopes to play the sound.
     this.playOneShot(buffer, filterConfigs, envelope);
   }
+
 
   /**
    * Builds and permanently hooks up channels to the master graph at initialization.
    */
   _initNodePools()
   {
+    // Initialize a pool of pre-connected audio nodes
+    // This prevents audio popping by keeping nodes connected at all times
     for (let i = 0; i < this._maxPoolSize; i++)
     {
       const gainNode = this.ctx.createGain();
@@ -131,6 +183,7 @@ class AudioManager
       const filter2 = this.ctx.createBiquadFilter();
 
       // Chain them permanently: Filter 1 -> Filter 2 -> Gain -> Master
+      // This fixed connection graph prevents runtime configuration clicks
       filter1.connect(filter2);
       filter2.connect(gainNode);
       gainNode.connect(this.masterGain);
@@ -140,21 +193,25 @@ class AudioManager
         filters: [filter1, filter2],
         source: null,
         inUse: false
-      });
+      }); 
     }
   }
 
   static createNoiseBuffer(ctx, durationSecs)
   {
+    // Create a white noise buffer of the specified duration
     const bufferSize = ctx.sampleRate * durationSecs;
     const buffer     = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data       = buffer.getChannelData(0);
     
+    // Fill buffer with random values between -1 and 1
     for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
 
-    // Taper the extreme edges of the audio file to guarantee zero initial waveform pop
+    // Taper the edges to prevent popping
+    // This creates a smooth fade-in and fade-out at the buffer edges
     const taper = Math.min(300, bufferSize / 2);
-    for (let i = 0; i < taper; i++) {
+    for (let i = 0; i < taper; i++) 
+    {
       data[i] *= (i / taper);
       data[bufferSize - 1 - i] *= (i / taper);
     }
@@ -178,20 +235,24 @@ class AudioManager
 
   _applyEnvelope(gainParam, envelope, startTime)
   {
-    const peak    = envelope.peak ?? 1;
-    const attack  = envelope.attack ?? 0;
-    const holdAt  = envelope.holdAt;
+    // Apply an ADSR (Attack-Decay-Sustain-Release) envelope to a gain parameter
+    const peak    = envelope.peak ?? 1;    // Maximum volume
+    const attack  = envelope.attack ?? 0;  // Time to reach peak volume
+    const holdAt  = envelope.holdAt;       // Optional sustain time
     const endTime = envelope.endTime ?? (attack + (envelope.decay ?? 0.1));
 
-    // Ensure it sets baseline from absolute silence smoothly
+    // Start from absolute silence to prevent pops
     gainParam.setValueAtTime(0, startTime);
 
+    // Apply attack with minimum duration to prevent artifacts
     const safeAttack = Math.max(0.005, attack);
     gainParam.linearRampToValueAtTime(peak, startTime + safeAttack);
 
+    // Optional sustain phase
     if (holdAt !== undefined && holdAt > safeAttack)
       gainParam.setValueAtTime(peak, startTime + holdAt);
 
+    // Smooth release to silence
     gainParam.exponentialRampToValueAtTime(0.001, startTime + endTime);
     gainParam.setValueAtTime(0, startTime + endTime + 0.005);
   }
