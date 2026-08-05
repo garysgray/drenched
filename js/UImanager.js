@@ -12,17 +12,15 @@ class UIManager
     this.visuals     = visuals;
     this.environment = environment;
 
+    // PYRAMID PYRAMID: UIManager instantiates and owns HUD internally!
+    this.hud         = new HUD();
+
     // Sub-modules managed by this UI object
     this.text      = new TextDisplay();
     this.hideTimer = null;
 
     // Cache DOM references in one clean place
     this.hudEl       = document.querySelector('.HUD');
-    this.textSlider  = document.getElementById('scroll-speed');
-    this.textLabel   = document.getElementById('scroll-speed-val');
-    this.volSlider   = document.getElementById('master-volume');
-    this.volLabel    = document.getElementById('master-volume-val');
-    this.muteBtn     = document.getElementById('mute-btn');
 
     // Run the master initialization layout hooks immediately at bootup
     this._initEventListeners();
@@ -42,62 +40,87 @@ class UIManager
 
     // 1. WEATHER SPEEDS
     ['slow', 'med', 'fast'].forEach(id => {
-      document.getElementById(id).addEventListener('click', () => {
-        interact(() => {
-          this.syncSpeedButtonUI(id);
-          this.environment.changeIntensity(id);
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          interact(() => {
+            this.hud.syncSpeedButtonUI(id);
+            this.environment.changeIntensity(id);
+          });
         });
-      });
+      }
     });
 
     // 2. RENDERING COLORS
     ['red', 'green', 'blue'].forEach(id => {
-      document.getElementById(id).addEventListener('click', () => {
-        interact(() => {
-          this.syncColorButtonUI(id);
-          this.visuals.setColor(id);
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          interact(() => {
+            this.hud.syncColorButtonUI(id);
+            this.visuals.setColor(id);
+          });
         });
-      });
+      }
     });
 
     // 3. STORY TEXT INTERACTIONS (Big box & text marquee toggles)
     const handleTextToggle = () => {
       interact(() => {
         this.text.toggleScrollMode();
-        this.syncTextMenuSlider(this.text.isScrolling);
+        this.hud.syncTextMenuSlider(this.text.isScrolling);
       });
     };
 
-    document.getElementById('text-toggle').addEventListener('click', handleTextToggle);
-    this.text.bindScrollElementClick(handleTextToggle); // Fixed pointer hand marquee link
+    const textToggle = document.getElementById('text-toggle');
+    if (textToggle) textToggle.addEventListener('click', handleTextToggle);
+    
+    if (this.text && typeof this.text.bindScrollElementClick === 'function') {
+      this.text.bindScrollElementClick(handleTextToggle);
+    }
 
-    document.getElementById('text-mode-static').addEventListener('click', () => {
-      interact(() => { this.text.forceSetMode(false); this.syncTextMenuSlider(false); });
-    });
+    const staticMode = document.getElementById('text-mode-static');
+    if (staticMode) {
+      staticMode.addEventListener('click', () => {
+        interact(() => { this.text.forceSetMode(false); this.hud.syncTextMenuSlider(false); });
+      });
+    }
 
-    document.getElementById('text-mode-scroll').addEventListener('click', () => {
-      interact(() => { this.text.forceSetMode(true); this.syncTextMenuSlider(true); });
-    });
+    const scrollMode = document.getElementById('text-mode-scroll');
+    if (scrollMode) {
+      scrollMode.addEventListener('click', () => {
+        interact(() => { this.text.forceSetMode(true); this.hud.syncTextMenuSlider(true); });
+      });
+    }
 
-    // 4. SCROLL SPEED SLIDER
-    this.textSlider.addEventListener('input', () => {
-      this.textLabel.textContent = `${this.textSlider.value}s`;
-      this.text.updateAnimationSpeed(this.textSlider.value);
-    });
+        // 4. SCROLL SPEED SLIDER
+    // The manager listens for the input event, but attaches it directly to the HUD's slider asset!
+    if (this.hud.slider) {
+      this.hud.slider.addEventListener('input', () => {
+        this.hud.updateSliderLabel(); // Tell HUD skin to change its text readout label
+        this.text.updateAnimationSpeed(this.hud.slider.value); // Tell Text engine to change marquee duration
+      });
+    }
 
     // 5. MASTER VOLUME SLIDER
-    this.volSlider.addEventListener('input', () => {
-      this.audio.setMasterVolume(this.volSlider.value / 100);
-      this.volLabel.textContent = `${this.volSlider.value}%`;
-    });
+    if (this.hud.volSlider) {
+      this.hud.volSlider.addEventListener('input', () => {
+        const val = this.hud.volSlider.value; // Read the value from the HUD slider
+        this.audio.setMasterVolume(val / 100); 
+        this.hud.updateVolumeLabel(); // Tell HUD skin to update its % text label
+      });
+    }
 
     // 6. MASTER AUDIO MUTE SYSTEM
-    this.muteBtn.addEventListener('click', () => {
-      interact(() => {
-        this.audio.toggleMute();
-        this.updateMuteButtonVisuals(this.audio.muted);
+    if (this.hud.muteBtn) {
+      this.hud.muteBtn.addEventListener('click', () => {
+        interact(() => {
+          this.audio.toggleMute();
+          this.hud.updateMuteButtonVisuals(this.audio.muted); // Tell HUD skin to swap Mute/Unmute text words
+        });
       });
-    });
+    }
+
   }
 
   /**
@@ -105,47 +128,18 @@ class UIManager
    */
   initLayoutStates(intensityId, colorId)
   {
-    this.syncSpeedButtonUI(intensityId);
-    this.syncColorButtonUI(colorId);
+    this.hud.syncSpeedButtonUI(intensityId);
+    this.hud.syncColorButtonUI(colorId);
 
     // Seed sliders straight from config rules
-    this.textSlider.min   = CONFIG.scroll.minSpeedSecs;
-    this.textSlider.max   = CONFIG.scroll.maxSpeedSecs;
-    this.textSlider.value = CONFIG.scroll.defaultSpeedSecs;
-    this.textLabel.textContent = `${this.textSlider.value}s`;
-
-    this.volSlider.value = Math.round(CONFIG.masterVolume * 100);
-    this.volLabel.textContent = `${this.volSlider.value}%`;
-    this.updateMuteButtonVisuals(this.audio.muted);
+    this.hud.initScrollSlider();
+    this.hud.initVolumeUI();
   }
 
-  // ── VISUAL STATE SYNCHRONIZERS ──
-  
-  syncSpeedButtonUI(activeId) {
-    ['slow', 'med', 'fast'].forEach(b => document.getElementById(b).className = '');
-    document.getElementById(activeId).className = 'active-speed';
-  }
-
-  syncColorButtonUI(activeId) {
-    ['red', 'green', 'blue'].forEach(b => document.getElementById(b).className = '');
-    document.getElementById(activeId).className = CONFIG.colors[activeId].cls;
-  }
-
-  syncTextMenuSlider(isScrolling) {
-    document.getElementById('text-mode-static').className = isScrolling ? '' : 'active-speed';
-    document.getElementById('text-mode-scroll').className = isScrolling ? 'active-speed' : '';
-    document.getElementById('scroll-speed-group').style.display   = isScrolling ? 'flex'  : 'none';
-    document.getElementById('scroll-speed-divider').style.display = isScrolling ? 'block' : 'none';
-  }
-
-  updateMuteButtonVisuals(isMuted) {
-    this.muteBtn.className   = isMuted ? 'active-speed' : '';
-    this.muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
-  }
-
-  // ── IDLE ANIMATION LOOPS (Old HUD behaviors) ──
+  // ── IDLE ANIMATION LOOPS ──
 
   _initAutoHide() {
+    if (!this.hudEl) return;
     this.hudEl.style.transition = CONFIG.hud.transitionCss;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -158,6 +152,7 @@ class UIManager
   }
 
   _show() {
+    if (!this.hudEl) return;
     this.hudEl.style.opacity       = '1';
     this.hudEl.style.pointerEvents = 'auto';
     this.hudEl.style.transform     = 'translateX(-50%) translateY(0)';
@@ -167,11 +162,9 @@ class UIManager
   }
 
   _hide() {
+    if (!this.hudEl) return;
     this.hudEl.style.opacity       = '0';
     this.hudEl.style.pointerEvents = 'none';
     document.body.style.cursor  = 'none';
   }
 }
-
-//This is the file you were looking for. It groups your old HUD and TextDisplay into one single, master UI file, keeping all the event listeners, click handlers, and DOM bindings completely isolated away from your core simulation physics [^utils].
-// Why this structure matches your engineering goals:The Engine is clean: It doesn't fetch elements, write strings like 'ui_click', or parse sliders. It just sets up the backend and passes control to the UI object [^utils].True initialization pipeline: Inside UIManager, the setup runs sequentially through _initEventListeners() and _initAutoHide() inside the constructor, neatly collecting your code paths [^utils].No scattered files: Your previous HUD.js file is now completely swallowed by this clean UIManager.js file, eliminating one of your 9 files entirely and reducing overall system clutter [^utils].(Note: Your TextDisplay.js file stays exactly the same as the clean version from the previous turn!)Does this setup feel much closer to how you prefer to organize your game engine loops? Let me know if we should check out how the EnvironmentController acts as the glue code between this new UI system and the weather sounds!

@@ -391,7 +391,7 @@ body {
   padding: var(--hud-pad);
   backdrop-filter: blur(var(--hud-blur));
   box-shadow: var(--hud-shadow);
-  opacity: 0; 
+  opacity: 1;
 }
 
 .control-group {

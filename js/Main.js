@@ -26,4 +26,5 @@ document.addEventListener('DOMContentLoaded', () =>
 {
   const engine = new Engine();
   engine.start('slow', 'red');
+  
 });

@@ -20,7 +20,9 @@ class Engine
     this.visuals     = new RainVisuals();
     this.environment = new EnvironmentController(this.audio, this.visuals, null); // We will link text next
 
-    // Initialize the Unified UI Layer and let it do all the lifting
+    // FIXED PYRAMID HIERARCHY: Completely removed the direct 'new HUD()' call here.
+    // The Engine no longer deals with visual sub-skins directly. It delegates 
+    // 100% of the UI workspace construction over to the UIManager master wrapper.
     this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
     // Wire the text component into the environment controller now that UI built it
