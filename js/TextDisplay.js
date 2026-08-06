@@ -14,29 +14,80 @@ class TextDisplay
 {
   constructor()
   {
-    // Initialize DOM references
-    this.stage       = document.querySelector('.text-stage');
-    this.isScrolling = false; // Tracks whether the text is currently scrolling or static
-    this.mainText    = document.querySelector('.main-text');
-    this.shadowText  = document.querySelector('.shadow-text');
-    this._fontFlashTimer = null; // Holds the active timeout handler for thunder flash resets
+    // Reference existing static elements
+    this.stage = document.querySelector('.text-stage');
+    this.textWrap = document.querySelector('#text-toggle');
+    this.mainText = document.querySelector('.main-text');
+    this.shadowText = document.querySelector('.shadow-text');
+    this.isScrolling = false;
+    this._fontFlashTimer = null;
 
-    // Build the horizontal moving marquee text element
-    this._buildScrollEl();
-  }
-
-  _buildScrollEl()
-  {
-    // Create and configure scrolling text element completely from scratch in memory
-    this.scrollEl           = document.createElement('div');
+    // Create scrolling elements
+    this.scrollEl = document.createElement('div');
+    this.scrollEl.id = 'dynamic-scroll-text';
     this.scrollEl.className = 'scroll-left';
     this.scrollEl.innerHTML = '<p>It was a Dark and Stormy Night!!!</p>';
-    
-    // VISUAL FIX: Forces the browser to display the clicking hand cursor over this text
-    this.scrollEl.style.cursor = 'pointer'; 
-    
+    this.scrollEl.style.cursor = 'pointer';
     this.stage.appendChild(this.scrollEl);
     this.scrollText = this.scrollEl.querySelector('p');
+
+    // Initialize state
+    this.stage.classList.remove('scrolling');
+  }
+
+  /**
+   * Sets external action handler for component events
+   */
+  setActionHandler(handler) {
+    this._externalActionHandler = handler;
+  }
+
+  /**
+   * Returns event mapping configuration
+   */
+
+  getEventMaps() {
+    return [
+      {
+        elementId: 'text-toggle',
+        eventType: 'click',
+        actionType: 'TOGGLE_SCROLL_MODE'
+      },
+      {
+        elementId: 'dynamic-scroll-text', // <-- Added to register scrolling element click
+        eventType: 'click',
+        actionType: 'TOGGLE_SCROLL_MODE'
+      },
+      {
+        elementId: 'text-mode-static',
+        eventType: 'click',
+        actionType: 'SET_TEXT_MODE',
+        actionValue: false
+      },
+      {
+        elementId: 'text-mode-scroll',
+        eventType: 'click',
+        actionType: 'SET_TEXT_MODE',
+        actionValue: true
+      }
+    ];
+  }
+
+  /**
+   * Updates visual state based on action type
+   */
+  updateVisualState(actionType, value) {
+    switch(actionType) {
+      case 'TOGGLE_SCROLL_MODE':
+        this.toggleScrollMode();
+        break;
+      case 'SET_TEXT_MODE':
+        this.forceSetMode(value);
+        break;
+      case 'UPDATE_SCROLL_SPEED':
+        this.updateAnimationSpeed(value);
+        break;
+    }
   }
 
   /**
@@ -82,54 +133,37 @@ class TextDisplay
     }
   }
 
-  /**
-   * Synchronized Timeline Entrypoint: Executed exclusively by EnvironmentController.
-   */
-  flashFont({ crack, attackSecs, decaySecs })
+
+//Synchronized Timeline Entrypoint: Executed exclusively by EnvironmentController.
+flashFont({ crack, attackSecs, decaySecs })
+{
+  // Clear any existing flash timer to prevent animations from stepping on each other
+  clearTimeout(this._fontFlashTimer);
+
+  const targets = [this.mainText, this.shadowText, this.scrollText];
+
+  // 1. Trigger the flash by applying a data attribute and setting custom CSS variables
+  for (const el of targets)
   {
-    // Clear any existing flash timer to prevent animations from stepping on each other
-    clearTimeout(this._fontFlashTimer);
+    if (!el) continue;
+    
+    // Pass dynamic timing configuration straight into CSS variables
+    el.style.setProperty('--flash-attack', `${attackSecs}s`);
+    el.style.setProperty('--flash-decay', `${decaySecs}s`);
+    
+    // Turn the flash on
+    el.dataset.flash = "active";
+  }
 
-    // Calculate flash intensity based on thunder crack strength
-    const peak           = Math.min(1, crack);
-    const peakBrightness = 1 + peak * 2.5;
-    const restShadowOp   = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-shadow-opacity')) || 0.85;
-    const peakShadowOp   = Math.min(1, restShadowOp + peak * (1 - restShadowOp));
-    const targets        = [this.mainText, this.shadowText, this.scrollText];
-
-    console.log(`[TEXT] flashStart=${performance.now().toFixed(2)}ms peak=${peakBrightness.toFixed(2)}`);
-
-    // Apply flash effect to all text elements
+  // 2. Set timer to cleanly turn the flash state off after the attack phase completes
+  this._fontFlashTimer = setTimeout(() =>
+  {
     for (const el of targets)
     {
       if (!el) continue;
-
-      // Reset styles and force reflow
-      el.style.transition = 'none';
-      el.style.filter     = 'brightness(1)';
-      el.style.opacity    = el === this.shadowText ? String(restShadowOp) : '1';
-      
-      // WEIRD SYNTAX: "void el.offsetWidth" is a clever browser hack. 
-      // It forces the web browser to recalculate the text layout instantly. 
-      // Without this line, the browser groups style updates together, which breaks the flash animation flow.
-      void el.offsetWidth; 
-
-      // Apply flash animation (fades the brightness into maximum white glint)
-      el.style.transition = `filter ${attackSecs}s linear, opacity ${attackSecs}s linear`;
-      el.style.filter     = `brightness(${peakBrightness})`;
-      if (el === this.shadowText) el.style.opacity = String(peakShadowOp);
+      el.dataset.flash = "inactive";
     }
+  }, attackSecs * 1000);
+}
 
-    // Set timer to smoothly fade back to the normal baseline dark state
-    this._fontFlashTimer = setTimeout(() =>
-    {
-      for (const el of targets)
-      {
-        if (!el) continue;
-        el.style.transition = `filter ${decaySecs}s ease-out, opacity ${decaySecs}s ease-out`;
-        el.style.filter     = 'brightness(1)';
-        if (el === this.shadowText) el.style.opacity = String(restShadowOp);
-      }
-    }, attackSecs * 1000); // Multiplied by 1000 because JavaScript setTimeout timers count in milliseconds
-  }
 }

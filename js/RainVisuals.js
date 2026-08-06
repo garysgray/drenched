@@ -33,7 +33,7 @@ class RainVisuals
   // Helper method to generate a texture canvas for a given alpha value
   _createTexture(alpha)
   {
-    const size = 128;
+    const size = 128; // Locked small tile size for CSS repeating background
     const texCanvas = document.createElement('canvas');
     texCanvas.width = size;
     texCanvas.height = size;
@@ -55,67 +55,26 @@ class RainVisuals
     return texCanvas;
   }
 
+
+
   // ── FILM GRAIN RENDERING ───────────────────────────────────────
   _initGrain()
   {
-    const canvas = document.getElementById('noise');
-    if (!canvas) {
-      console.error('Noise canvas not found');
-      return;
-    }
+    // 1. Generate exactly one crisp 128x128 noise pattern tile canvas
+    const tileCanvas = this._createTexture(CONFIG.grain.alpha);
     
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('Could not get canvas context');
-      return;
+    // 2. Convert that canvas directly into a compressed data URL string
+    const grainDataUrl = tileCanvas.toDataURL();
+    
+    // 3. Inject that data URL directly into an empty layout div overlay element
+    const noiseOverlay = document.getElementById('noise');
+    if (noiseOverlay) {
+      noiseOverlay.style.backgroundImage = `url(${grainDataUrl})`;
     }
-
-    const TEXTURE_SIZE = 128;
-    let grainTexture = null;
-    let textureNeedsRefresh = true;
-
-    const resize = () =>
-    {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      textureNeedsRefresh = true;
-    };
-
-    const drawGrain = () =>
-    {
-      if (textureNeedsRefresh || !grainTexture)
-      {
-        grainTexture = this._createTexture(CONFIG.grain.alpha);
-        textureNeedsRefresh = false;
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const tilesX = Math.ceil(canvas.width / TEXTURE_SIZE) + 1;
-      const tilesY = Math.ceil(canvas.height / TEXTURE_SIZE) + 1;
-
-      for (let x = 0; x < tilesX; x++)
-      {
-        for (let y = 0; y < tilesY; y++)
-        {
-          ctx.drawImage(
-            grainTexture,
-            x * TEXTURE_SIZE,
-            y * TEXTURE_SIZE,
-            TEXTURE_SIZE,
-            TEXTURE_SIZE
-          );
-        }
-      }
-
-      requestAnimationFrame(drawGrain);
-    };
-
-    resize();
-    this._resizeHandler = resize;
-    window.addEventListener('resize', this._resizeHandler);
-    drawGrain();
   }
+
+
+
 
   _preGenerateGrainTextures() 
   {
@@ -150,26 +109,30 @@ class RainVisuals
     this.root.style.setProperty('--op-rev',      s.opRev);
   }
 
+  
   flashLightning({ crack, attackSecs, decaySecs })
   {
     console.log(`[VISUALS] flashStart=${performance.now().toFixed(2)}ms crack=${crack.toFixed(2)}`);
     clearTimeout(this._flashTimer);
 
     const peak = Math.min(1, crack);
+    const target = this.lightning;
 
-    this.lightning.style.transition = 'none';
-    this.lightning.style.opacity    = '0';
-    void this.lightning.offsetWidth;
+    // 1. Pass the dynamic timeline durations straight into CSS variables
+    target.style.setProperty('--lightning-attack', `${attackSecs}s`);
+    target.style.setProperty('--lightning-decay', `${decaySecs}s`);
+    target.style.setProperty('--lightning-peak', String(peak));
 
-    this.lightning.style.transition = `opacity ${attackSecs}s linear`;
-    this.lightning.style.opacity    = String(peak);
+    // 2. Trigger the animation using a fast, non-blocking HTML attribute layer
+    target.dataset.flash = "active";
 
+    // 3. Centralized timer clears out the state asynchronously 
     this._flashTimer = setTimeout(() =>
     {
-      this.lightning.style.transition = `opacity ${decaySecs}s ease-out`;
-      this.lightning.style.opacity    = '0';
+      target.dataset.flash = "inactive";
     }, attackSecs * 1000);
   }
+
 
   setColor(id)
   {

@@ -3,20 +3,107 @@
 
 class HUD
 {
-  /**
-   * Targets the DOM HUD wrapper, caches references, and initializes interface states.
-   * No longer accepts callbacks, binds mouse events directly, or manages auto-hide timers.
-   */
   constructor()
   {
-    this.el        = document.querySelector('.HUD'); // The floating main interface window
+    this.el = document.querySelector('.HUD');
+    
+    // Cache DOM references
+    this.slider = document.getElementById('scroll-speed');
+    this.label = document.getElementById('scroll-speed-val');
+    this.volSlider = document.getElementById('master-volume');
+    this.volLabel = document.getElementById('master-volume-val');
+    this.muteBtn = document.getElementById('mute-btn');
+  }
 
-    // Cache references to the interactive controls so the UIManager can manipulate them
-    this.slider      = document.getElementById('scroll-speed');
-    this.label       = document.getElementById('scroll-speed-val');
-    this.volSlider   = document.getElementById('master-volume');
-    this.volLabel    = document.getElementById('master-volume-val');
-    this.muteBtn     = document.getElementById('mute-btn');
+  /**
+   * Returns event mapping configuration
+   */
+  getEventMaps() {
+    return [
+      {
+        elementId: 'scroll-speed',
+        eventType: 'input',
+        actionType: 'SET_SCROLL_SPEED'
+      },
+      {
+        elementId: 'master-volume',
+        eventType: 'input', 
+        actionType: 'SET_MASTER_VOLUME'
+      },
+      {
+        elementId: 'mute-btn',
+        eventType: 'click',
+        actionType: 'TOGGLE_MUTE'
+      },
+      {
+        elementId: 'slow',
+        eventType: 'click',
+        actionType: 'SET_RAIN_INTENSITY',
+        actionValue: 'slow'
+      },
+      {
+        elementId: 'med',
+        eventType: 'click',
+        actionType: 'SET_RAIN_INTENSITY',
+        actionValue: 'med'
+      },
+      {
+        elementId: 'fast',
+        eventType: 'click',
+        actionType: 'SET_RAIN_INTENSITY',
+        actionValue: 'fast'
+      },
+      {
+        elementId: 'red',
+        eventType: 'click',
+        actionType: 'SET_COLOR',
+        actionValue: 'red'
+      },
+      {
+        elementId: 'green',
+        eventType: 'click',
+        actionType: 'SET_COLOR',
+        actionValue: 'green'
+      },
+      {
+        elementId: 'blue',
+        eventType: 'click',
+        actionType: 'SET_COLOR',
+        actionValue: 'blue'
+      }
+    ];
+  }
+
+  
+  updateVisualState(actionType, value) {
+    switch(actionType) {
+      case 'SET_SCROLL_SPEED':
+        this.updateSliderLabel();
+        break;
+      case 'SET_MASTER_VOLUME':
+        this.updateVolumeLabel();
+        break;
+      case 'TOGGLE_MUTE':
+        this.updateMuteButtonVisuals(value);
+        break;
+      case 'SET_RAIN_INTENSITY':
+        this.syncSpeedButtonUI(value);
+        break;
+      case 'SET_COLOR':
+        this.syncColorButtonUI(value);
+        break;
+      case 'TOGGLE_SCROLL_MODE':
+      case 'SET_TEXT_MODE':
+        const isScrolling = !!value;
+        const speedGroup = document.getElementById('scroll-speed-group');
+        const divider = document.getElementById('scroll-speed-divider');
+        if (speedGroup) speedGroup.style.display = isScrolling ? 'flex' : 'none';
+        if (divider) divider.style.display = isScrolling ? 'block' : 'none';
+        
+        // Synchronize menu highlight button states if active text object is toggled
+        this.syncTextMenuSlider(isScrolling);
+        break;
+    }
   }
 
   /**

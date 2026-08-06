@@ -18,15 +18,17 @@ class Engine
     // Initialize core logic subsystems
     this.audio       = new AudioManager(CONFIG.masterVolume);
     this.visuals     = new RainVisuals();
-    this.environment = new EnvironmentController(this.audio, this.visuals, null); // We will link text next
+    this.environment = new EnvironmentController(this.audio, this.visuals, null);
 
-    // FIXED PYRAMID HIERARCHY: Completely removed the direct 'new HUD()' call here.
-    // The Engine no longer deals with visual sub-skins directly. It delegates 
-    // 100% of the UI workspace construction over to the UIManager master wrapper.
+    // Initialize UI manager with core engine references
     this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
-    // Wire the text component into the environment controller now that UI built it
-    this.environment.textDisplay = this.ui.text;
+    // Register all UI components
+    this.ui.registerComponent('primary_hud', new HUD());
+    this.ui.registerComponent('text_display', new TextDisplay());
+    
+    // Wire text display reference into environment controller
+    this.environment.textDisplay = this.ui.components.get('text_display');
 
     // Unblock browser sound restriction on the first click
     document.addEventListener('click', () => this.audio.resume(), { once: true });
@@ -41,7 +43,7 @@ class Engine
     this.environment.changeIntensity(intensityId);
     this.visuals.setColor(colorId);
 
-    // Command the UI object to sync its visual layouts to match those starting settings
+    // Initialize UI states through registry system
     this.ui.initLayoutStates(intensityId, colorId);
   }
 }

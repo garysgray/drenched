@@ -268,15 +268,27 @@ class AudioManager
   }
 
   setMasterVolume(value)
-  {
-    const vol = Math.max(0, Math.min(1, value));
-    this._masterVolume = vol;
-    this._preMuteVolume = vol;
-    CONFIG.masterVolume  = vol;
-
-    if (!this.muted)
-      this.masterGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+{
+  let numericValue = parseFloat(value);
+  if (isNaN(numericValue)) {
+    numericValue = 1; 
   }
+
+  const vol = Math.max(0, Math.min(1, numericValue));
+  
+  this._masterVolume = vol;
+  this._preMuteVolume = vol;
+  CONFIG.masterVolume  = vol;
+
+  // RESUME CHECK: Fixes browser autoplay/interaction blocks
+  if (this.ctx && this.ctx.state === 'suspended') {
+    this.ctx.resume();
+  }
+
+  if (!this.muted && this.masterGain) {
+    this.masterGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+  }
+}
 
   toggleMute()
   {
