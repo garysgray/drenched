@@ -120,6 +120,12 @@ const _configData =
     alpha: 18,
   }),
 
+  // ── Central Scene Text Copy ─────────────────────────────────
+  text: Object.freeze(
+  {
+    content: "It was a Dark and Stormy Night!!!",
+  }),
+
 };
 
 const CONFIG = 
@@ -137,6 +143,9 @@ const CONFIG =
   get hud() { return _configData.hud; },
   get scroll() { return _configData.scroll; },
   get grain() { return _configData.grain; },
+
+  // Expose the text config block safely
+  get text() { return _configData.text; },
   
   // Mutable properties (only where runtime updates are required)
   _masterVolume: 1,

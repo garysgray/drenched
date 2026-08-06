@@ -1,10 +1,11 @@
 // ── HUD ───────────────────────────────────────────────────────
 // Depends on: CONFIG
 
-class HUD
+class HUD extends UIComponent 
 {
   constructor()
   {
+    super();
     this.el = document.querySelector('.HUD');
     
     // Cache DOM references
@@ -15,9 +16,28 @@ class HUD
     this.muteBtn = document.getElementById('mute-btn');
   }
 
-  /**
-   * Returns event mapping configuration
-   */
+  updateVisualState(actionType, value) 
+  {
+    switch (actionType) {
+      case 'SET_RAIN_INTENSITY':
+        // This runs your existing button highlight function smoothly
+        this.syncSpeedButtonUI(value);
+        break;
+        
+      case 'SET_COLOR':
+        // This runs your existing color highlight function smoothly
+        this.syncColorButtonUI(value);
+        break;
+        
+      case 'SET_TEXT_MODE':
+        // Put whatever method your HUD uses to hide/show the speed slider here
+        // For example: this.syncTextModeUI(value);
+        break;
+    }
+  }
+
+
+  //Returns event mapping configuration
   getEventMaps() 
   {
     return [

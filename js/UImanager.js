@@ -35,84 +35,25 @@ class UIManager
 
   _handleComponentAction(actionType, value) 
   {
+    // Core Logic Redirection: Update background physics/audio context engines instantly
     switch(actionType) 
     {
       case 'SET_RAIN_INTENSITY':
-      {
-        // 1. Trigger the background engine state change
         if (this.engines.environment) this.engines.environment.changeIntensity(value);
-        
-        // 2. NEW FIX: Tell the HUD component to swap the active-speed button highlight class
-        const hud = this.components.get('primary_hud');
-        if (hud) hud.syncSpeedButtonUI(value);
         break;
-      }
       case 'SET_COLOR':
-      {
-        // 1. Trigger the visual engine color state change
         if (this.engines.visuals) this.engines.visuals.setColor(value);
-        
-        // 2. NEW FIX: Tell the HUD component to swap the active color highlight class
-        const hud = this.components.get('primary_hud');
-        if (hud) hud.syncColorButtonUI(value);
         break;
-      }
-      case 'TOGGLE_SCROLL_MODE':
-      {
-        const textDisplay = this.components.get('text_display');
-        const hud = this.components.get('primary_hud');
-        
-        if (textDisplay) {
-          textDisplay.updateVisualState('TOGGLE_SCROLL_MODE');
-          if (hud) {
-            hud.updateVisualState('SET_TEXT_MODE', textDisplay.isScrolling);
-          }
-        }
-        break; 
-      }
-      case 'SET_TEXT_MODE': 
-      {
-        const textDisplay = this.components.get('text_display');
-        const hud = this.components.get('primary_hud');
-        if (textDisplay) textDisplay.updateVisualState(actionType, value);
-        if (hud) hud.updateVisualState(actionType, value);
-        break;
-      }
-      case 'SET_SCROLL_SPEED': 
-      {
-        const hud = this.components.get('primary_hud');
-        if (hud) {
-          hud.updateVisualState(actionType, value);
-          const textDisplay = this.components.get('text_display');
-          if (textDisplay) {
-            textDisplay.updateVisualState('UPDATE_SCROLL_SPEED', value);
-            if (textDisplay.scrollText) {
-              textDisplay.scrollText.style.animationDuration = `${value}s`;
-            }
-          }
-        }
-        break;
-      }
-      case 'SET_MASTER_VOLUME': 
-      {
-        const hud = this.components.get('primary_hud');
-        if (hud) {
-          hud.updateVisualState(actionType, value);
-          if (this.engines.audio) this.engines.audio.setMasterVolume(value / 100);
-        }
-        break;
-      }
-      case 'TOGGLE_MUTE': 
-      {
-        const hud = this.components.get('primary_hud');
-        if (hud) 
-        {
-          hud.updateVisualState(actionType, value);
-          if (this.engines.audio) this.engines.audio.toggleMute();
-        }
-        break;
-      }
+      // ... keep any other core engine mappings here (e.g. volume controls)
     }
+
+    // Loop through ALL registered components blindly. If they are a UIComponent,
+    // pass the action straight through their standard inbound door.
+    this.components.forEach((component) => {
+      if (typeof component.updateVisualState === 'function') {
+        component.updateVisualState(actionType, value);
+      }
+    });
   }
 
   initLayoutStates(intensityId, colorId) 

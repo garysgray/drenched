@@ -10,10 +10,11 @@
 // It is completely passive regarding audio or click tracking, and instead
 // exposes clean public functions so the central Engine can command it.
 
-class TextDisplay
+class TextDisplay extends UIComponent
 {
   constructor()
   {
+    super();
     // Reference existing static elements
     this.stage = document.querySelector('.text-stage');
     this.textWrap = document.querySelector('#text-toggle');
@@ -21,6 +22,11 @@ class TextDisplay
     this.shadowText = document.querySelector('.shadow-text');
     this.isScrolling = false;
     this._fontFlashTimer = null;
+
+    // DYNAMIC INJECTION FIXED: Pull text safely from central configuration properties
+    const textAsset = CONFIG.text.content;
+    this.mainText.textContent = textAsset;
+    this.shadowText.textContent = textAsset;
 
     // Create scrolling elements
     this.scrollEl = document.createElement('div');
@@ -33,6 +39,20 @@ class TextDisplay
 
     // Initialize state
     this.stage.classList.remove('scrolling');
+  }
+
+  updateVisualState(actionType, value) {
+    switch(actionType) {
+      case 'TOGGLE_SCROLL_MODE':
+        this.toggleScrollMode();
+        break;
+      case 'SET_TEXT_MODE':
+        this.forceSetMode(value);
+        break;
+      case 'UPDATE_SCROLL_SPEED':
+        this.updateAnimationSpeed(value);
+        break;
+    }
   }
 
   // Returns event mapping configuration
