@@ -55,8 +55,6 @@ class RainVisuals
     return texCanvas;
   }
 
-
-
   // ── FILM GRAIN RENDERING ───────────────────────────────────────
   _initGrain()
   {
@@ -72,9 +70,6 @@ class RainVisuals
       noiseOverlay.style.backgroundImage = `url(${grainDataUrl})`;
     }
   }
-
-
-
 
   _preGenerateGrainTextures() 
   {
@@ -109,7 +104,6 @@ class RainVisuals
     this.root.style.setProperty('--op-rev',      s.opRev);
   }
 
-  
   flashLightning({ crack, attackSecs, decaySecs })
   {
     console.log(`[VISUALS] flashStart=${performance.now().toFixed(2)}ms crack=${crack.toFixed(2)}`);
@@ -123,15 +117,20 @@ class RainVisuals
     target.style.setProperty('--lightning-decay', `${decaySecs}s`);
     target.style.setProperty('--lightning-peak', String(peak));
 
-    // 2. Trigger the animation using a fast, non-blocking HTML attribute layer
+    // 2. Trigger the animation via the hardware-accelerated attribute state
     target.dataset.flash = "active";
 
-    // 3. Centralized timer clears out the state asynchronously 
+    // 3. FIXED: Keep the active state alive long enough for the browser 
+    // to complete its paint frames over network execution contexts.
+    // Instead of killing it at attackSecs (0.05s), wait until the fade starts.
+    const holdTimeSecs = attackSecs + 0.05; 
+
     this._flashTimer = setTimeout(() =>
     {
       target.dataset.flash = "inactive";
-    }, attackSecs * 1000);
+    }, holdTimeSecs * 1000);
   }
+
 
 
   setColor(id)
