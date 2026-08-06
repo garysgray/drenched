@@ -35,17 +35,7 @@ class TextDisplay
     this.stage.classList.remove('scrolling');
   }
 
-  /**
-   * Sets external action handler for component events
-   */
-  setActionHandler(handler) {
-    this._externalActionHandler = handler;
-  }
-
-  /**
-   * Returns event mapping configuration
-   */
-
+  // Returns event mapping configuration
   getEventMaps() {
     return [
       {

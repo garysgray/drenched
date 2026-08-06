@@ -53,19 +53,14 @@ class EnvironmentController
     const a = CONFIG.audio;
     if (!cfg) return;
 
-    // 1. Anchor to the exact unshakeable Web Audio hardware clock
+    // Anchor to the exact unshakeable Web Audio hardware clock
     const now = this.audio.ctx.currentTime;
 
-    const payload = {
-      crack: cfg.crack,
-      attackSecs: a.crackAttackSecs,
-      decaySecs: a.crackDecaySecs
-    };
+    const payload = { crack: cfg.crack, attackSecs: a.crackAttackSecs, decaySecs: a.crackDecaySecs };
 
-    // 2. Telemetry Log
+    //  Telemetry Log
     console.log(`[STRIKE] perf=${performance.now().toFixed(2)}ms audioCtx=${now.toFixed(4)}s intensity=${intensity}`);
 
-    // 3. FIXED: Stripped requestAnimationFrame wrapper. 
     // Firing these instantly ensures the lightning and font styles inject 
     // onto the page at the exact same millisecond the audio context is triggered.
     if (this.visuals && typeof this.visuals.flashLightning === 'function') 
@@ -77,7 +72,7 @@ class EnvironmentController
       this.text.flashFont(payload);
     }
 
-    // 4. Fire audio one-shots locked precisely to our hardware clock timeline
+    // Fire audio one-shots locked precisely to our hardware clock timeline
     this._playCrack(now, cfg);
     this._playRumble(now, cfg, intensity);
   }

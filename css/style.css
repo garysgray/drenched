@@ -635,7 +635,7 @@ button.active-speed {
   will-change: opacity;
 }
 
-/* ⚡ The Flash Phase: Triggers instantly on dynamic data matches */
+/*  The Flash Phase: Triggers instantly on dynamic data matches */
 #lightning[data-flash="active"] {
   transition: opacity var(--lightning-attack, 0.05s) linear !important;
   opacity: var(--lightning-peak, 1) !important;

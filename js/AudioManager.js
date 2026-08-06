@@ -14,7 +14,6 @@
 // configuration clicks. The static node pooling system improves performance
 // by reusing audio nodes instead of creating new ones for each sound.
 
-
 class AudioManager
 {
   constructor(initialVolume = 1)
@@ -96,10 +95,7 @@ class AudioManager
     this.playOneShot(buffer, filterConfigs, envelope);
   }
 
-
-  /**
-   * Builds and permanently hooks up channels to the master graph at initialization.
-   */
+  // Builds and permanently hooks up channels to the master graph at initialization.
   _initNodePools()
   {
     // Initialize a pool of pre-connected audio nodes
@@ -149,9 +145,7 @@ class AudioManager
     return buffer;
   }
 
-  /**
-   * Configures a pre-connected filter node safely without destroying the audio graph.
-   */
+  // Configures a pre-connected filter node safely without destroying the audio graph.
   _configureFilter(filterNode, config)
   {
     if (!config) {
@@ -237,9 +231,7 @@ class AudioManager
     }
   }
 
-  /**
-   * Reusable channel worker method that completely replaces runtime node instantiation.
-   */
+  // Reusable channel worker method that completely replaces runtime node instantiation.
   playOneShot(buffer, filter, envelope = {})
   {
     const startTime = envelope.startTime ?? this.ctx.currentTime;
@@ -268,27 +260,27 @@ class AudioManager
   }
 
   setMasterVolume(value)
-{
-  let numericValue = parseFloat(value);
-  if (isNaN(numericValue)) {
-    numericValue = 1; 
-  }
+  {
+    let numericValue = parseFloat(value);
+    if (isNaN(numericValue)) {
+      numericValue = 1; 
+    }
 
-  const vol = Math.max(0, Math.min(1, numericValue));
-  
-  this._masterVolume = vol;
-  this._preMuteVolume = vol;
-  CONFIG.masterVolume  = vol;
+    const vol = Math.max(0, Math.min(1, numericValue));
+    
+    this._masterVolume = vol;
+    this._preMuteVolume = vol;
+    CONFIG.masterVolume  = vol;
 
-  // RESUME CHECK: Fixes browser autoplay/interaction blocks
-  if (this.ctx && this.ctx.state === 'suspended') {
-    this.ctx.resume();
-  }
+    // RESUME CHECK: Fixes browser autoplay/interaction blocks
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
 
-  if (!this.muted && this.masterGain) {
-    this.masterGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    if (!this.muted && this.masterGain) {
+      this.masterGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    }
   }
-}
 
   toggleMute()
   {

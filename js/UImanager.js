@@ -1,7 +1,8 @@
 
 class UIManager
 {
-  constructor(audio, visuals, environment) {
+  constructor(audio, visuals, environment) 
+  {
     this.engines = { audio, visuals, environment };
     this.components = new Map();
     this.hideTimer = null;
@@ -9,20 +10,18 @@ class UIManager
     this._initAutoHide();
   }
 
-  registerComponent(name, instance) {
+  registerComponent(name, instance) 
+  {
     this.components.set(name, instance);
     
-    if (typeof instance.setActionHandler === 'function') {
-      instance.setActionHandler((actionType, value) => {
-        this._handleComponentAction(actionType, value);
-      });
-    }
-    
     const eventMaps = instance.getEventMaps();
-    eventMaps.forEach(({elementId, eventType, actionType, actionValue}) => {
+    eventMaps.forEach(({elementId, eventType, actionType, actionValue}) => 
+    {
       const element = document.getElementById(elementId);
-      if (element) {
-        element.addEventListener(eventType, () => {
+      if (element) 
+      {
+        element.addEventListener(eventType, () => 
+        {
           this.engines.audio.play('ui_click');
           
           // KEEPING THIS intact: Ensures dynamic values map directly from range sliders

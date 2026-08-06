@@ -18,7 +18,8 @@ class RainVisuals
     this.rainRev      = document.getElementById('rain-rev');
     this.lightning    = document.getElementById('lightning');
     
-    if (!this.rainAngled || !this.rainStraight || !this.rainRev || !this.lightning) {
+    if (!this.rainAngled || !this.rainStraight || !this.rainRev || !this.lightning) 
+    {
       console.error('Required DOM elements not found');
       return;
     }
@@ -58,15 +59,16 @@ class RainVisuals
   // ── FILM GRAIN RENDERING ───────────────────────────────────────
   _initGrain()
   {
-    // 1. Generate exactly one crisp 128x128 noise pattern tile canvas
+    // Generate exactly one crisp 128x128 noise pattern tile canvas
     const tileCanvas = this._createTexture(CONFIG.grain.alpha);
     
-    // 2. Convert that canvas directly into a compressed data URL string
+    // Convert that canvas directly into a compressed data URL string
     const grainDataUrl = tileCanvas.toDataURL();
     
-    // 3. Inject that data URL directly into an empty layout div overlay element
+    // Inject that data URL directly into an empty layout div overlay element
     const noiseOverlay = document.getElementById('noise');
-    if (noiseOverlay) {
+    if (noiseOverlay) 
+    {
       noiseOverlay.style.backgroundImage = `url(${grainDataUrl})`;
     }
   }
@@ -112,15 +114,15 @@ class RainVisuals
     const peak = Math.min(1, crack);
     const target = this.lightning;
 
-    // 1. Pass the dynamic timeline durations straight into CSS variables
+    // Pass the dynamic timeline durations straight into CSS variables
     target.style.setProperty('--lightning-attack', `${attackSecs}s`);
     target.style.setProperty('--lightning-decay', `${decaySecs}s`);
     target.style.setProperty('--lightning-peak', String(peak));
 
-    // 2. Trigger the animation via the hardware-accelerated attribute state
+    // Trigger the animation via the hardware-accelerated attribute state
     target.dataset.flash = "active";
 
-    // 3. FIXED: Keep the active state alive long enough for the browser 
+    // Keep the active state alive long enough for the browser 
     // to complete its paint frames over network execution contexts.
     // Instead of killing it at attackSecs (0.05s), wait until the fade starts.
     const holdTimeSecs = attackSecs + 0.05; 
@@ -130,8 +132,6 @@ class RainVisuals
       target.dataset.flash = "inactive";
     }, holdTimeSecs * 1000);
   }
-
-
 
   setColor(id)
   {

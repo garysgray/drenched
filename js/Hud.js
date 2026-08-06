@@ -18,7 +18,8 @@ class HUD
   /**
    * Returns event mapping configuration
    */
-  getEventMaps() {
+  getEventMaps() 
+  {
     return [
       {
         elementId: 'scroll-speed',
