@@ -39,21 +39,32 @@ class UIManager
     switch(actionType) 
     {
       case 'SET_RAIN_INTENSITY':
+      {
+        // 1. Trigger the background engine state change
         if (this.engines.environment) this.engines.environment.changeIntensity(value);
+        
+        // 2. NEW FIX: Tell the HUD component to swap the active-speed button highlight class
+        const hud = this.components.get('primary_hud');
+        if (hud) hud.syncSpeedButtonUI(value);
         break;
+      }
       case 'SET_COLOR':
+      {
+        // 1. Trigger the visual engine color state change
         if (this.engines.visuals) this.engines.visuals.setColor(value);
+        
+        // 2. NEW FIX: Tell the HUD component to swap the active color highlight class
+        const hud = this.components.get('primary_hud');
+        if (hud) hud.syncColorButtonUI(value);
         break;
+      }
       case 'TOGGLE_SCROLL_MODE':
       {
         const textDisplay = this.components.get('text_display');
         const hud = this.components.get('primary_hud');
         
-        // 1. Flip text state internally
         if (textDisplay) {
           textDisplay.updateVisualState('TOGGLE_SCROLL_MODE');
-          
-          // 2. Alert the HUD component of the new state to adjust matching classes/sliders
           if (hud) {
             hud.updateVisualState('SET_TEXT_MODE', textDisplay.isScrolling);
           }

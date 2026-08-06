@@ -22,7 +22,9 @@
   --dur-straight:        0.28s;
   --dur-rev:             0.18s;
 
-
+  /* Lightning flash strengths — legacy tokens, no longer driven by CSS animation */
+  --lightning-a:         0.0;
+  --lightning-b:         0.0;
 
   /* Layout */
   --text-top:            22vh;     /* vertical position of hero text and scroll text */
@@ -203,13 +205,6 @@ body {
 }
 
 
-/* ── Lightning ──────────────────────────────────────────────── */
-/* Opacity is driven by RainVisuals.flashLightning() on each thunder strike. */
-#lightning {
-  position: fixed; inset: 0; z-index: 5; pointer-events: none;
-  background: var(--lightning-color);
-  opacity: 0;
-}
 
 
 /* ── Fog ────────────────────────────────────────────────────── */
@@ -552,7 +547,7 @@ button.active-speed {
   align-items: center;
   gap: 6px;
   color: var(--text-color, #ffffff);
-  font-family:var(--font-hud);
+  font-family: 'Special Elite', monospace;
   font-size: 0.75rem;
   text-decoration: none;
   opacity: 0.4;
@@ -619,4 +614,34 @@ button.active-speed {
   50%  { transform: translate(12px, -5px); }
   75%  { transform: translate(-8px, -12px); }
   100% { transform: translate(5px, 7px); }
+}
+
+
+/* ── Lightning ──────────────────────────────────────────────── */
+/* Transitions and alpha levels are driven hardware-accelerated by data attributes */
+#lightning {
+  position: fixed; 
+  inset: 0; 
+  z-index: 5; 
+  pointer-events: none;
+  
+  /* KEEP THIS: Preserves your project's custom theme flash color properties */
+  background: var(--lightning-color);
+  
+  opacity: 0;
+  
+  /* Offloads the fade transition load directly to the hardware GPU compositor */
+  transition: opacity var(--lightning-decay, 0.5s) ease-out;
+  will-change: opacity;
+}
+
+/* ⚡ The Flash Phase: Triggers instantly on dynamic data matches */
+#lightning[data-flash="active"] {
+  transition: opacity var(--lightning-attack, 0.05s) linear !important;
+  opacity: var(--lightning-peak, 1) !important;
+}
+
+/* Clear state reset fallback alignment */
+#lightning[data-flash="inactive"] {
+  opacity: 0 !important;
 }
