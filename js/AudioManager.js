@@ -89,7 +89,7 @@ class AudioManager
     };
 
     //  Print a debug log to the browser console showing exactly when this noise scheduled itself
-    console.log(`[AUDIO] ${assetKey} scheduled=${envelope.startTime.toFixed(4)}s bufferSecs=${bufferSecs.toFixed(3)}`);
+    //console.log(`[AUDIO] ${assetKey} scheduled=${envelope.startTime.toFixed(4)}s bufferSecs=${bufferSecs.toFixed(3)}`);
 
     //  Fire the synthesizers! Feed the random static noise through the filters and volume envelopes to play the sound.
     this.playOneShot(buffer, filterConfigs, envelope);

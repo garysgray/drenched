@@ -34,6 +34,7 @@ class Engine
     document.addEventListener('click', () => this.audio.resume(), { once: true });
   }
 
+
   // Fires up the simulation state on load.
   start(intensityId, colorId)
   {

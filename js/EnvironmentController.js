@@ -59,7 +59,7 @@ class EnvironmentController
     const payload = { crack: cfg.crack, attackSecs: a.crackAttackSecs, decaySecs: a.crackDecaySecs };
 
     //  Telemetry Log
-    console.log(`[STRIKE] perf=${performance.now().toFixed(2)}ms audioCtx=${now.toFixed(4)}s intensity=${intensity}`);
+    //console.log(`[STRIKE] perf=${performance.now().toFixed(2)}ms audioCtx=${now.toFixed(4)}s intensity=${intensity}`);
 
     // Firing these instantly ensures the lightning and font styles inject 
     // onto the page at the exact same millisecond the audio context is triggered.

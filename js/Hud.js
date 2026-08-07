@@ -16,28 +16,7 @@ class HUD extends UIComponent
     this.muteBtn = document.getElementById('mute-btn');
   }
 
-  updateVisualState(actionType, value) 
-  {
-    switch (actionType) {
-      case 'SET_RAIN_INTENSITY':
-        // This runs your existing button highlight function smoothly
-        this.syncSpeedButtonUI(value);
-        break;
-        
-      case 'SET_COLOR':
-        // This runs your existing color highlight function smoothly
-        this.syncColorButtonUI(value);
-        break;
-        
-      case 'SET_TEXT_MODE':
-        // Put whatever method your HUD uses to hide/show the speed slider here
-        // For example: this.syncTextModeUI(value);
-        break;
-    }
-  }
-
-
-  //Returns event mapping configuration
+  // Returns event mapping configuration
   getEventMaps() 
   {
     return [
@@ -95,7 +74,9 @@ class HUD extends UIComponent
     ];
   }
 
-  
+  /**
+   * THE ONLY INBOUND DOOR: Unified state handler for the HUD component
+   */
   updateVisualState(actionType, value) {
     switch(actionType) {
       case 'SET_SCROLL_SPEED':

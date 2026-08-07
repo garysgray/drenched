@@ -49,7 +49,7 @@ class TextDisplay extends UIComponent
       case 'SET_TEXT_MODE':
         this.forceSetMode(value);
         break;
-      case 'UPDATE_SCROLL_SPEED':
+      case 'SET_SCROLL_SPEED':
         this.updateAnimationSpeed(value);
         break;
     }
@@ -94,7 +94,7 @@ class TextDisplay extends UIComponent
       case 'SET_TEXT_MODE':
         this.forceSetMode(value);
         break;
-      case 'UPDATE_SCROLL_SPEED':
+      case 'SET_SCROLL_SPEED':
         this.updateAnimationSpeed(value);
         break;
     }

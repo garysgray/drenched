@@ -35,6 +35,9 @@ class UIManager
 
   _handleComponentAction(actionType, value) 
   {
+    // Local placeholder to pass the updated mute boolean down to the HUD broadcast
+    let broadcastValue = value;
+
     // Core Logic Redirection: Update background physics/audio context engines instantly
     switch(actionType) 
     {
@@ -44,17 +47,49 @@ class UIManager
       case 'SET_COLOR':
         if (this.engines.visuals) this.engines.visuals.setColor(value);
         break;
-      // ... keep any other core engine mappings here (e.g. volume controls)
+
+      // VOLUME CONTROL ENGINE PIPE
+      case 'SET_MASTER_VOLUME':
+        if (this.engines.audio) {
+          // Check if your AudioManager uses a setter function, otherwise mutate the property
+          if (typeof this.engines.audio.setMasterVolume === 'function') {
+            this.engines.audio.setMasterVolume(value / 100);
+          } else {
+            this.engines.audio.masterVolume = value / 100; // Scales 0-100 slider down to 0.0-1.0 float
+          }
+        }
+        break;
+
+      // MUTE STATE ENGINE PIPE
+      case 'TOGGLE_MUTE':
+        if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function') {
+          // Executes the audio hardware mute and grabs the returned true/false boolean
+          broadcastValue = this.engines.audio.toggleMute(); 
+        }
+        break;
+
+      // SCROLL SPEED ENGINE PIPE
+      case 'SET_SCROLL_SPEED':
+        // Redirect the speed duration change straight to the TextDisplay component instance
+        const textDisplay = this.components.get('text_display');
+        if (textDisplay && typeof textDisplay.updateVisualState === 'function') 
+        {
+          textDisplay.updateVisualState(actionType, value);
+        }
+        break;
     }
 
     // Loop through ALL registered components blindly. If they are a UIComponent,
     // pass the action straight through their standard inbound door.
-    this.components.forEach((component) => {
-      if (typeof component.updateVisualState === 'function') {
-        component.updateVisualState(actionType, value);
+    this.components.forEach((component) => 
+    {
+      if (typeof component.updateVisualState === 'function') 
+      {
+        component.updateVisualState(actionType, broadcastValue);
       }
     });
   }
+
 
   initLayoutStates(intensityId, colorId) 
   {
