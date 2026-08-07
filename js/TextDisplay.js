@@ -1,34 +1,34 @@
-// ── TextDisplay ───────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// ── TEXTDISPLAY ───────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //
-// A passive rendering layer for hero typography. 
-// Completely solid by default—only animates when explicitly 
-// directed by the EnvironmentController timeline.
-//
-// Depends on: CONFIG
-//
-// Role in project: Manages the big narrative text overlay on screen. 
-// It is completely passive regarding audio or click tracking, and instead
-// exposes clean public functions so the central Engine can command it.
+// Description: Manages all text rendering and animation for the scene
+// Core Role:   Handles static and scrolling text modes with flash effects
+// Dependencies: CONFIG, UIComponent
 
 class TextDisplay extends UIComponent
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
   {
     super();
-    // Reference existing static elements
+    
+    // Cache DOM references
     this.stage = document.querySelector('.text-stage');
     this.textWrap = document.querySelector('#text-toggle');
     this.mainText = document.querySelector('.main-text');
     this.shadowText = document.querySelector('.shadow-text');
+    
+    // State tracking
     this.isScrolling = false;
     this._fontFlashTimer = null;
 
-    // DYNAMIC INJECTION FIXED: Pull text safely from central configuration properties
+    // Initialize text content from central config
     const textAsset = CONFIG.text.content;
     this.mainText.textContent = textAsset;
     this.shadowText.textContent = textAsset;
 
-    // Create scrolling elements
+    // ── SCROLLING TEXT SETUP ─────────────────────────────────
     this.scrollEl = document.createElement('div');
     this.scrollEl.id = 'dynamic-scroll-text';
     this.scrollEl.className = 'scroll-left';
@@ -37,7 +37,7 @@ class TextDisplay extends UIComponent
     this.stage.appendChild(this.scrollEl);
     this.scrollText = this.scrollEl.querySelector('p');
 
-    // Initialize state
+    // Set initial display state
     this.stage.classList.remove('scrolling');
   }
 

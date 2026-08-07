@@ -1,33 +1,38 @@
-// ── RainVisuals ───────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// ── RAINVISUALS ──────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //
-// Owns all visual updates:
-//   - CSS variables on :root
-//   - Rain layer animation durations
-//   - Film grain canvas
-//   - JS-driven lightning flashes (triggered by Engine on thunder strikes)
-//
-// Depends on: CONFIG (config.js)
+// Description: Central controller for all visual effects in the scene
+// Core Role:   Manages rain layers, lightning flashes, and visual effects
+// Dependencies: CONFIG
 
 class RainVisuals
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
   {
-    this.root         = document.documentElement;
+    // Cache root element for CSS variable access
+    this.root = document.documentElement;
+    
+    // Reference visual layer elements
     this.rainAngled   = document.getElementById('rain-angled');
     this.rainStraight = document.getElementById('rain-straight');
     this.rainRev      = document.getElementById('rain-rev');
     this.lightning    = document.getElementById('lightning');
     
+    // Validate required elements exist
     if (!this.rainAngled || !this.rainStraight || !this.rainRev || !this.lightning) 
     {
       console.error('Required DOM elements not found');
       return;
     }
     
+    // Effect timers
     this._flashTimer  = null;
     this._grainTimer = 0;
     this._grainTextures = {};
     
+    // Initialize film grain effect
     this._initGrain();
   }
 

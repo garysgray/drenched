@@ -1,30 +1,21 @@
-// ── MAIN (Entry Point) ───────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// ── MAIN ──────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //
-// Architectural Role:
-//   - Sole entry point for application initialization
-//   - Coordinates the critical boot sequence
-//   - Maintains no state (stateless entry handler)
-//
-// System Dependencies:
-//   1. config.js (must load first for global CONFIG)
-//   2. engine.js (core system coordinator)
-//
-// Boot Sequence:
-//   1. Waits for DOMContentLoaded (safe DOM access)
-//   2. Instantiates Engine (root coordinator)
-//   3. Triggers start() with default intensity/color
-//
-// Key Constraints:
-//   - Must remain lightweight (no business logic)
-//   - Should only be called once (singleton pattern enforced by load order)
-//
-// Load Order in index.html:
-//   config.js → audio-manager.js → rain-sounds.js → rain-visuals.js →
-//   text-display.js → hud.js → engine.js → main.js
+// Description: Application entry point that initializes all systems
+// Core Role:   Coordinates the boot sequence and starts the Engine
+// Dependencies: CONFIG, Engine
 
-document.addEventListener('DOMContentLoaded', () =>
+// ── BOOT SEQUENCE ────────────────────────────────────────────
+// 1. Waits for DOM readiness
+// 2. Creates Engine instance (root coordinator)
+// 3. Starts simulation with default parameters
+
+document.addEventListener('DOMContentLoaded', () => 
 {
+  // Initialize core systems through Engine
   const engine = new Engine();
-  engine.start('slow', 'red');
   
+  // Start with default weather intensity and color theme
+  engine.start('slow', 'red');
 });

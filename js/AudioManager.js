@@ -1,41 +1,37 @@
-// ── AudioManager ──────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// ── AUDIOMANAGER ─────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //
-// Generic Web Audio wrapper optimized with static node pooling:
-//   - AudioContext + master gain
-//   - Fixed, pre-connected channel nodes to stop browser configuration clicks
-//   - Safe, popping-free one-shot playback and loop channel management
-//
-// Game-specific sound recipes live in separate modules.
-//
-// Why this exists:
-// The AudioManager handles all audio operations in the game, providing a clean
-// abstraction over the Web Audio API. It manages sound effects, music, and
-// audio processing while preventing common issues like audio popping and
-// configuration clicks. The static node pooling system improves performance
-// by reusing audio nodes instead of creating new ones for each sound.
+// Description: Core audio system handling all sound synthesis and playback
+// Core Role:   Manages Web Audio nodes with static pooling for performance
+// Dependencies: CONFIG, SoundRecipes
 
 class AudioManager
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(initialVolume = 1)
   {
-    // Create the main audio context
-    this.ctx            = new AudioContext();
-    this.muted          = false;
+    // Initialize Web Audio context
+    this.ctx = new AudioContext();
+    
+    // Volume state tracking
+    this.muted = false;
     this._preMuteVolume = initialVolume;
-    this._masterVolume  = initialVolume;
+    this._masterVolume = initialVolume;
 
-    // Master volume control node routed directly to speakers
-    this.masterGain            = this.ctx.createGain();
+    // ── AUDIO GRAPH SETUP ─────────────────────────────────────
+    // Create master gain node (final output stage)
+    this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = initialVolume;
     this.masterGain.connect(this.ctx.destination);
 
-    // Pre-allocate static channels to prevent audio popping
-    // This creates a pool of reusable audio nodes that are always connected
-    this._loops = {};
-    this._oneShotPool = [];
-    this._maxPoolSize = 12; // Maximum concurrent thunder layers/UI sounds allowed
+    // ── NODE POOLING SYSTEM ──────────────────────────────────
+    // Pre-allocated channels prevent audio popping
+    this._loops = {}; // Persistent loop channels
+    this._oneShotPool = []; // One-shot effect channels
+    this._maxPoolSize = 12; // Max concurrent sounds
 
-    // Initialize the node pools
+    // Initialize pre-connected node pools
     this._initNodePools();
   }
 

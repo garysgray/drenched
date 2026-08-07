@@ -1,14 +1,22 @@
+// ──────────────────────────────────────────────────────────────
 // ── HUD ───────────────────────────────────────────────────────
-// Depends on: CONFIG
+// ──────────────────────────────────────────────────────────────
+//
+// Description: Heads-Up Display controller managing all interactive UI elements
+// Core Role:   Handles user input events and visual state updates for controls
+// Dependencies: CONFIG, UIComponent
 
 class HUD extends UIComponent 
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
   {
     super();
+    
+    // Main HUD container reference
     this.el = document.querySelector('.HUD');
     
-    // Cache DOM references
+    // Cache control element references
     this.slider = document.getElementById('scroll-speed');
     this.label = document.getElementById('scroll-speed-val');
     this.volSlider = document.getElementById('master-volume');

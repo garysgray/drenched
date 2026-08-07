@@ -1,22 +1,25 @@
-// ── EnvironmentController ───────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// ── ENVIRONMENTCONTROLLER ─────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //
-// Master scene director that unifies:
-//   - Weather state transitions
-//   - Thunder strike timing
-//   - Cross-system effect synchronization
-//
-// Depends on: CONFIG, AudioManager, RainVisuals, TextDisplay
+// Description: Central coordinator for weather effects and timed events
+// Core Role:   Synchronizes audio, visuals and text during weather changes
+// Dependencies: CONFIG, AudioManager, RainVisuals, TextDisplay
 
 class EnvironmentController 
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(audio, visuals, text) 
   {
+    // Reference core systems
     this.audio = audio;
     this.visuals = visuals;
     this.text = text;
+    
+    // Thunder scheduling state
     this.thunderTimer = null;
     
-    // Start background rain loop
+    // Initialize persistent weather effects
     this._initRainLoop();
   }
 

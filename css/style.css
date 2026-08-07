@@ -1,8 +1,22 @@
-/* ══════════════════════════════════════════════════════════════
-   DARK & STORMY NIGHT — style.css
-   All magic numbers live in :root as custom properties.
-   Nothing else in this file should contain raw values.
-   ══════════════════════════════════════════════════════════════ */
+/* ──────────────────────────────────────────────────────────────
+   ── STYLE.CSS ─────────────────────────────────────────────────
+   ──────────────────────────────────────────────────────────────
+   
+   Description: Central stylesheet for the rain simulation project
+   Core Role:   Defines all visual styling and animations using CSS variables
+   Key Features:
+     - Fully dynamic theming via CSS custom properties
+     - Hardware-accelerated animations
+     - Responsive design with mobile considerations
+     - GPU-optimized effects (film grain, lightning flashes)
+     - Strict separation of design tokens from implementation
+*/
+
+/* ── DESIGN TOKENS ────────────────────────────────────────────
+   All configurable values are defined as CSS custom properties
+   in the :root selector. These are modified at runtime by JavaScript
+   to create dynamic visual effects.
+*/
 
 
 /* ── Design tokens ──────────────────────────────────────────── */
@@ -489,6 +503,7 @@ button.active-speed {
 
 .HUD input[type="range"] {
   width: var(--slider-width);
+  
   accent-color: var(--slider-color);
 }
 

@@ -1,48 +1,42 @@
-// ── Engine ────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// ── ENGINE ───────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //
-// Top level controller. Creates all subsystems and wires them
-// together. Only place that knows about all systems at once.
-//
-// Depends on: CONFIG, AudioManager, RainSounds, RainVisuals, TextDisplay, HUD
-//
-// Why this exists:
-// The Engine class acts as the central coordinator for all game subsystems.
-// It initializes and connects audio, visuals, text display, and the HUD,
-// ensuring they work together seamlessly. This avoids tight coupling between
-// subsystems while providing a single point of control.
+// Description: Core system coordinator that initializes and connects all subsystems
+// Core Role:   Maintains references to all major systems and handles their interactions
+// Dependencies: CONFIG, AudioManager, RainVisuals, TextDisplay, HUD, UIManager
 
 class Engine 
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor() 
   {
-    // Initialize core logic subsystems
+    // Initialize core subsystems
     this.audio       = new AudioManager(CONFIG.masterVolume);
     this.visuals     = new RainVisuals();
-    this.environment = new EnvironmentController(this.audio, this.visuals, null);
-
-    // Initialize UI manager with core engine references
+    
+    // Initialize UI management system
     this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
-    // Register all UI components
+    // ── UI COMPONENT REGISTRATION ─────────────────────────────
     this.ui.registerComponent('primary_hud', new HUD());
     this.ui.registerComponent('text_display', new TextDisplay());
     
-    // Wire text display reference into environment controller
-    this.environment.textDisplay = this.ui.components.get('text_display');
+    // Create environment controller with audio/visuals/text references
+    this.environment = new EnvironmentController(this.audio, this.visuals, this.ui.components.get('text_display'));
 
-    // Unblock browser sound restriction on the first click
+    // Handle browser audio autoplay restrictions
     document.addEventListener('click', () => this.audio.resume(), { once: true });
   }
 
-
-  // Fires up the simulation state on load.
+  // ── SYSTEM STARTUP ─────────────────────────────────────────
   start(intensityId, colorId)
   {
-    // Apply default physics engine states
+    // Initialize environment with default states
     this.environment.changeIntensity(intensityId);
     this.visuals.setColor(colorId);
 
-    // Initialize UI states through registry system
+    // Configure UI initial states
     this.ui.initLayoutStates(intensityId, colorId);
   }
 }

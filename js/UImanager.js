@@ -1,12 +1,29 @@
+// ──────────────────────────────────────────────────────────────
+// ── UIMANAGER ──────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+//
+// Description: Central controller for all UI components and their interactions
+// Core Role:   Manages component registration, event handling, and state broadcasts
+// Dependencies: CONFIG, UIComponent, AudioManager, RainVisuals, EnvironmentController
 
 class UIManager
 {
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(audio, visuals, environment) 
   {
+    // Reference core engine systems
     this.engines = { audio, visuals, environment };
+    
+    // Component registry
     this.components = new Map();
+    
+    // Auto-hide timer reference
     this.hideTimer = null;
+    
+    // Cache HUD element reference
     this.hudEl = document.querySelector('.HUD');
+    
+    // Initialize auto-hide behavior
     this._initAutoHide();
   }
 
