@@ -1,0 +1,35 @@
+
+/* ── HUD Footer & GitHub Link ────────────────────────────────── */
+.github-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 4px;
+  width: 100%;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-color, #ffffff);
+  font-family: 'Special Elite', monospace;
+  font-size: 0.75rem;
+  text-decoration: none;
+  opacity: 0.4;
+  transition: opacity 0.2s ease, text-shadow 0.2s ease;
+}
+
+.github-link:hover {
+  opacity: 0.9;
+  text-shadow: 0 0 4px var(--glow-color, rgba(215, 0, 0, 0.5));
+}
+
+.github-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.github-link:hover .github-icon {
+  transform: scale(1.1);
+}

@@ -59,7 +59,10 @@ class UIManager
     switch(actionType) 
     {
       case 'SET_RAIN_INTENSITY':
-        if (this.engines.environment) this.engines.environment.changeIntensity(value);
+        if (this.engines.environment) 
+          {
+            this.engines.environment.changeIntensity(value);
+          }
         break;
       case 'SET_COLOR':
         if (this.engines.visuals) this.engines.visuals.setColor(value);
@@ -111,7 +114,8 @@ class UIManager
   initLayoutStates(intensityId, colorId) 
   {
     const hud = this.components.get('primary_hud');
-    if (hud) {
+    if (hud) 
+      {
       hud.updateVisualState('SET_RAIN_INTENSITY', intensityId);
       hud.updateVisualState('SET_COLOR', colorId);
       hud.updateVisualState('SET_SCROLL_SPEED', CONFIG.scroll.defaultSpeedSecs);

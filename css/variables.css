@@ -1,0 +1,127 @@
+/* ── DESIGN TOKENS ────────────────────────────────────────────
+   All configurable values are defined as CSS custom properties
+   in the :root selector. These are modified at runtime by JavaScript
+   to create dynamic visual effects.
+*/
+:root 
+{
+
+  /* Theme — overwritten by JS on color change */
+  --text-color:          #cc0000;
+  --glow-color:          rgba(200, 0, 0, 0.75);
+
+  /* Rain layer opacities — overwritten by JS on intensity change */
+  --op-angled:           0.0;
+  --op-straight:         0.6;
+  --op-rev:              0.0;
+
+  /* Rain layer animation durations — overwritten by JS */
+  --dur-angled:          0.22s;
+  --dur-straight:        0.28s;
+  --dur-rev:             0.18s;
+
+  /* Lightning flash strengths — legacy tokens, no longer driven by CSS animation */
+  --lightning-a:         0.0;
+  --lightning-b:         0.0;
+
+  /* Layout */
+  --text-top:            22vh;     /* vertical position of hero text and scroll text */
+  --text-pad-x:          4vw;      /* horizontal padding around hero text */
+  --hud-bottom:          32px;     /* HUD distance from bottom on desktop */
+  --hud-bottom-mobile:   20px;     /* HUD distance from bottom on mobile */
+  --hud-pad:             12px 18px;
+  --hud-pad-mobile:      14px 16px;
+
+  /* Typography */
+  --font-hero:           'Creepster', cursive;
+  --font-hud:            'Special Elite', monospace;
+  --text-size:           clamp(40px, 8.5vw, 120px);
+  --text-shadow-offset:  7px;      /* static text drop-shadow offset */
+  --text-shadow-opacity: 0.85;
+
+  /* Rain tile sizes */
+  --rain-angled-size:    483px;
+  --rain-straight-size:  512px;
+  --rain-rev-size:       367px;
+
+  /* Rain layer transforms */
+  --rain-angled-rotate:  1.5deg;
+  --rain-rev-rotate:     2.2deg;
+  --rain-scale:          1.1;
+
+  /* Lightning */
+  --lightning-color:     #d8eeff;
+
+  /* Fog */
+  --fog-drift-duration:  14s;
+  --fog-drift-amount:    4%;
+  --fog-opacity-min:     0.7;
+
+  /* Gust */
+  --gust-duration:       8s;
+
+  /* Background overlay */
+  --bg-overlay:          rgba(0, 0, 0, 0.38);
+
+  /* Vignette */
+  --vignette-start:      35%;
+  --vignette-color:      rgba(0, 0, 0, 0.92);
+
+  /* Scanlines */
+  --scanline-gap:        2px;
+  --scanline-color:      rgba(0, 0, 0, 0.06);
+
+  /* HUD */
+  --hud-bg:              rgba(4, 4, 6, 0.82);
+  --hud-border:          rgba(255, 255, 255, 0.07);
+  --hud-radius:          8px;
+  --hud-blur:            16px;
+  --hud-shadow:          0 8px 40px rgba(0,0,0,0.85),
+                         0 1px 0 rgba(255,255,255,0.05) inset,
+                         0 -1px 0 rgba(0,0,0,0.6) inset;
+  --hud-divider-color:   rgba(255, 255, 255, 0.08);
+
+  --btn-bg:              rgba(255, 255, 255, 0.03);
+  --btn-border:          rgba(255, 255, 255, 0.08);
+  --btn-color:           rgba(255, 255, 255, 0.58);
+  --btn-hover-bg:        rgba(255, 255, 255, 0.07);
+  --btn-hover-border:    rgba(255, 255, 255, 0.2);
+  --btn-hover-color:     rgba(255, 255, 255, 0.85);
+  --btn-radius:          4px;
+  --btn-pad:             6px 12px;
+  --btn-pad-mobile:      8px 12px;
+  --btn-font-size:       10px;
+  --btn-font-size-mobile:11px;
+
+  --label-font-size:     8.5px;
+  --label-font-size-mob: 9px;
+  --label-color:         rgba(255, 255, 255, 0.55);
+
+  --slider-width:        80px;
+  --slider-color:        #ffcc44;
+  --slider-val-color:    #ffcc44;
+  --slider-val-size:     9px;
+  --slider-val-width:    28px;
+
+  /* Text entrance animation */
+  --entrance-duration:   2.4s;
+  --entrance-blur:       8px;
+  --entrance-y:          -18px;
+  --entrance-scale:      0.97;
+
+  /* Flicker animation */
+  --flicker-duration:    7s;
+  --flicker-low:         0.35;
+  --flicker-mid:         0.6;
+
+  /* Scroll text */
+  --scroll-duration:     15s;
+
+  /* Responsive breakpoint */
+  --bp-mobile:           640px;
+
+  /* GitHub Link specific design tokens */
+  --git-icon-gap:        6px;
+  --git-font-size:       10px;
+  --git-font-size-mob:   11px;
+}

@@ -1,0 +1,48 @@
+/* ── Effects ─────────────────────────────────────────────── */
+/* 1. Set up baseline transition rules using the JavaScript variables */
+.main-text, 
+.shadow-text, 
+.scroll-left p {
+  transition: filter var(--flash-decay, 0.5s) ease-out, opacity var(--flash-decay, 0.5s) ease-out;
+  will-change: filter, opacity; /* Informs the browser to prepare the GPU */
+}
+
+/* 2. The Flash Phase: Triggered immediately when data-flash becomes "active" */
+[data-flash="active"] {
+  transition: filter var(--flash-attack, 0.05s) linear, opacity var(--flash-attack, 0.05s) linear !important;
+  filter: brightness(3.5) !important; /* Ramps up the lightning glint effect */
+}
+
+/* 3. Specific drop shadow opacity override during peak flash */
+.shadow-text[data-flash="active"] {
+  opacity: 1 !important;
+}
+
+/* 4. Safe fallback for when flash state returns to normal */
+[data-flash="inactive"] {
+  filter: brightness(1);
+}
+
+
+/* Hardware-Accelerated CSS Film Grain Engine */
+#noise {
+  position: fixed;
+  inset: -100px; /* Over-extends boundaries slightly so offsets never show blank edge gaps */
+  z-index: 15;
+  pointer-events: none;
+  
+  /* The dynamic data URL string injected via JS repeats automatically to fill the screen */
+  background-repeat: repeat; 
+  
+  /*  Asynchronous GPU matrix movement loops */
+  animation: grain-flicker 0.15s steps(4) infinite;
+  will-change: transform; /* Flags the graphics card to isolate this layer */
+}
+
+@keyframes grain-flicker {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-5px, 10px); }
+  50%  { transform: translate(12px, -5px); }
+  75%  { transform: translate(-8px, -12px); }
+  100% { transform: translate(5px, 7px); }
+}

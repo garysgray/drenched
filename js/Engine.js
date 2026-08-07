@@ -14,14 +14,19 @@ class Engine
     // Initialize core subsystems
     this.audio       = new AudioManager(CONFIG.masterVolume);
     this.visuals     = new RainVisuals();
+    
+    // Create environment controller with audio/visuals references
+    this.environment = new EnvironmentController(this.audio, this.visuals, null);
+
+    // Initialize UI management system
     this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
     // ── UI COMPONENT REGISTRATION ─────────────────────────────
     this.ui.registerComponent('primary_hud', new HUD());
     this.ui.registerComponent('text_display', new TextDisplay());
     
-    // Create environment controller with audio/visuals/text references
-    this.environment = new EnvironmentController(this.audio, this.visuals, this.ui.components.get('text_display'));
+    // Connect text display to environment controller
+    this.environment.textDisplay = this.ui.components.get('text_display');
 
     // Handle browser audio autoplay restrictions
     document.addEventListener('click', () => this.audio.resume(), { once: true });

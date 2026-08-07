@@ -1,0 +1,31 @@
+/* ── Fog ────────────────────────────────────────────────────── */
+#fog {
+  position: fixed; inset: 0; z-index: 6; pointer-events: none;
+  background:
+    radial-gradient(ellipse 140% 35% at 20% 85%, rgba(10,30,25,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 25% at 80% 90%, rgba(10,25,30,0.45) 0%, transparent 65%);
+  animation: fog-drift var(--fog-drift-duration) ease-in-out infinite alternate;
+}
+@keyframes fog-drift {
+  from { transform: translateX(calc(var(--fog-drift-amount) * -1)); opacity: var(--fog-opacity-min); }
+  to   { transform: translateX(var(--fog-drift-amount));            opacity: 1; }
+}
+
+/* ── Scanlines ──────────────────────────────────────────────── */
+#scanlines {
+  position: fixed; inset: 0; z-index: 80; pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent var(--scanline-gap),
+    var(--scanline-color) var(--scanline-gap),
+    var(--scanline-color) calc(var(--scanline-gap) * 2)
+  );
+}
+
+
+/* ── Vignette ───────────────────────────────────────────────── */
+#vignette {
+  position: fixed; inset: 0; z-index: 81; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent var(--vignette-start), var(--vignette-color) 100%);
+}

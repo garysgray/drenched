@@ -1,0 +1,51 @@
+/* ── Rain layers ────────────────────────────────────────────── */
+#rain-angled,
+#rain-straight,
+#rain-rev {
+  position: fixed; inset: 0; pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+#rain-angled {
+  z-index: 2;
+  background: url(../images/rain.png);
+  background-size: var(--rain-angled-size) auto;
+  transform: rotate(var(--rain-angled-rotate)) scale(var(--rain-scale));
+  animation: anim-angled var(--dur-angled) linear infinite;
+  opacity: var(--op-angled);
+}
+@keyframes anim-angled {
+  from { background-position: 0 0; }
+  to   { background-position: -10% 100%; }
+}
+
+#rain-straight {
+  z-index: 3;
+  background: url(../images/rain_straight.png);
+  background-size: var(--rain-straight-size) auto;
+  animation: anim-straight var(--dur-straight) linear infinite;
+  opacity: var(--op-straight);
+}
+@keyframes anim-straight {
+  from { background-position: 0 0; }
+  to   { background-position: 0 100%; }
+}
+
+#rain-rev {
+  z-index: 4;
+  background: url(../images/rain_rev.png);
+  background-size: var(--rain-rev-size) auto;
+  transform: rotate(var(--rain-rev-rotate)) scale(var(--rain-scale));
+  animation: anim-rev var(--dur-rev) linear infinite,
+             gust var(--gust-duration) ease-in-out infinite;
+  opacity: var(--op-rev);
+}
+@keyframes anim-rev {
+  from { background-position: 0 0; }
+  to   { background-position: 10% 100%; }
+}
+@keyframes gust {
+  0%, 40%, 60%, 100% { opacity: 0; }
+  50%                { opacity: calc(var(--op-rev) * 0.8); }
+}
+

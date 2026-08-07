@@ -113,7 +113,6 @@ class RainVisuals
 
   flashLightning({ crack, attackSecs, decaySecs })
   {
-    console.log(`[VISUALS] flashStart=${performance.now().toFixed(2)}ms crack=${crack.toFixed(2)}`);
     clearTimeout(this._flashTimer);
 
     const peak = Math.min(1, crack);

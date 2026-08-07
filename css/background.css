@@ -1,0 +1,10 @@
+/* ── Background ─────────────────────────────────────────────── */
+#bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: url(../images/trees.jpg) center / cover no-repeat;
+}
+#bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--bg-overlay);
+}

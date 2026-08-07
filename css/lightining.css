@@ -1,0 +1,29 @@
+
+/* ── Lightning ──────────────────────────────────────────────── */
+/* Transitions and alpha levels are driven hardware-accelerated by data attributes */
+#lightning {
+  position: fixed; 
+  inset: 0; 
+  z-index: 5; 
+  pointer-events: none;
+  
+  /* KEEP THIS: Preserves your project's custom theme flash color properties */
+  background: var(--lightning-color);
+  
+  opacity: 0;
+  
+  /* Offloads the fade transition load directly to the hardware GPU compositor */
+  transition: opacity var(--lightning-decay, 0.5s) ease-out;
+  will-change: opacity;
+}
+
+/*  The Flash Phase: Triggers instantly on dynamic data matches */
+#lightning[data-flash="active"] {
+  transition: opacity var(--lightning-attack, 0.05s) linear !important;
+  opacity: var(--lightning-peak, 1) !important;
+}
+
+/* Clear state reset fallback alignment */
+#lightning[data-flash="inactive"] {
+  opacity: 0 !important;
+}

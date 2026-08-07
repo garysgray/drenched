@@ -1,0 +1,124 @@
+/* ── HUD ────────────────────────────────────────────────────── */
+.HUD {
+  position: fixed;
+  bottom: var(--hud-bottom); left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  padding: var(--hud-pad);
+  backdrop-filter: blur(var(--hud-blur));
+  box-shadow: var(--hud-shadow);
+  opacity: 1;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+  padding: 0 14px;
+}
+
+.control-label {
+  font-family: var(--font-hud);
+  font-size: var(--label-font-size);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--label-color);
+}
+
+.btn-row { display: flex; gap: 4px; }
+
+.HUD button {
+  font-family: var(--font-hud);
+  font-size: var(--btn-font-size);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: var(--btn-pad);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  color: var(--btn-color);
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.HUD button:hover {
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-border);
+  color: var(--btn-hover-color);
+}
+.HUD button:active { transform: scale(0.96); }
+
+button.active-red {
+  background: rgba(160, 0, 0, 0.25);
+  border-color: rgba(200, 0, 0, 0.65);
+  color: #ff6060;
+  box-shadow: 0 0 12px rgba(200, 0, 0, 0.4), inset 0 1px 0 rgba(255,80,80,0.1);
+}
+button.active-green {
+  background: rgba(0, 130, 0, 0.2);
+  border-color: rgba(0, 185, 0, 0.65);
+  color: #60ff60;
+  box-shadow: 0 0 12px rgba(0, 185, 0, 0.4), inset 0 1px 0 rgba(80,255,80,0.1);
+}
+button.active-blue {
+  background: rgba(20, 50, 200, 0.22);
+  border-color: rgba(50, 100, 255, 0.65);
+  color: #7099ff;
+  box-shadow: 0 0 12px rgba(30, 90, 255, 0.4), inset 0 1px 0 rgba(80,120,255,0.1);
+}
+button.active-speed {
+  background: rgba(110, 70, 0, 0.28);
+  border-color: rgba(210, 155, 0, 0.6);
+  color: #ffcc44;
+  box-shadow: 0 0 12px rgba(200, 140, 0, 0.35), inset 0 1px 0 rgba(255,200,50,0.1);
+}
+
+.hud-divider {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--hud-divider-color) 30%,
+    var(--hud-divider-color) 70%,
+    transparent
+  );
+  flex-shrink: 0;
+}
+
+
+/* ── Slider group ───────────────────────────────────────────── */
+.hud-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+  padding: 0 14px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-value {
+  font-family: var(--font-hud);
+  font-size: var(--slider-val-size);
+  color: var(--slider-val-color);
+  min-width: var(--slider-val-width);
+  text-align: right;
+}
+
+.HUD input[type="range"] {
+  width: var(--slider-width);
+  
+  accent-color: var(--slider-color);
+}
+
