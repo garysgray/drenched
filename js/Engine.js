@@ -14,8 +14,6 @@ class Engine
     // Initialize core subsystems
     this.audio       = new AudioManager(CONFIG.masterVolume);
     this.visuals     = new RainVisuals();
-    
-    // Initialize UI management system
     this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
     // ── UI COMPONENT REGISTRATION ─────────────────────────────
