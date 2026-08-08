@@ -11,25 +11,26 @@ class Engine
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor() 
   {
-    // Initialize core subsystems
+    // Instantiate all core execution and visual layers on boot
+    const textDisplayInstance = new TextDisplay();
+    const HUDInstance = new HUD();
+
     this.audio       = new AudioManager(CONFIG.masterVolume);
     this.visuals     = new RainVisuals();
     
-    // Create environment controller with audio/visuals references
-    this.environment = new EnvironmentController(this.audio, this.visuals, null);
-
-    // Initialize UI management system
+    this.environment = new EnvironmentController(this.audio, this.visuals, textDisplayInstance);
     this.ui = new UIManager(this.audio, this.visuals, this.environment);
     
     // ── UI COMPONENT REGISTRATION ─────────────────────────────
-    this.ui.registerComponent('primary_hud', new HUD());
-    this.ui.registerComponent('text_display', new TextDisplay());
-    
-    // Connect text display to environment controller
-    this.environment.textDisplay = this.ui.components.get('text_display');
+    this.ui.registerComponent('primary_hud', HUDInstance);
+    this.ui.registerComponent('text_display', textDisplayInstance);
 
     // Handle browser audio autoplay restrictions
     document.addEventListener('click', () => this.audio.resume(), { once: true });
+
+    // Start with default weather intensity and color theme red
+    this.start(CONFIG.intensitiesModes.RAIN, Object.keys(CONFIG.colors)[0]);
+    
   }
 
   // ── SYSTEM STARTUP ─────────────────────────────────────────
@@ -43,3 +44,4 @@ class Engine
     this.ui.initLayoutStates(intensityId, colorId);
   }
 }
+

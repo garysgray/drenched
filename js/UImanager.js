@@ -58,18 +58,18 @@ class UIManager
     // Core Logic Redirection: Update background physics/audio context engines instantly
     switch(actionType) 
     {
-      case 'SET_RAIN_INTENSITY':
+      case CONFIG.UIActions.SET_RAIN_INTENSITY:
         if (this.engines.environment) 
           {
             this.engines.environment.changeIntensity(value);
           }
         break;
-      case 'SET_COLOR':
+      case CONFIG.UIActions.SET_COLOR:
         if (this.engines.visuals) this.engines.visuals.setColor(value);
         break;
 
       // VOLUME CONTROL ENGINE PIPE
-      case 'SET_MASTER_VOLUME':
+      case CONFIG.UIActions.SET_MASTER_VOLUME:
         if (this.engines.audio) {
           // Check if your AudioManager uses a setter function, otherwise mutate the property
           if (typeof this.engines.audio.setMasterVolume === 'function') {
@@ -81,7 +81,7 @@ class UIManager
         break;
 
       // MUTE STATE ENGINE PIPE
-      case 'TOGGLE_MUTE':
+      case CONFIG.UIActions.TOGGLE_MUTE:
         if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function') {
           // Executes the audio hardware mute and grabs the returned true/false boolean
           broadcastValue = this.engines.audio.toggleMute(); 
@@ -89,7 +89,7 @@ class UIManager
         break;
 
       // SCROLL SPEED ENGINE PIPE
-      case 'SET_SCROLL_SPEED':
+      case CONFIG.UIActions.SET_SCROLL_SPEED:
         // Redirect the speed duration change straight to the TextDisplay component instance
         const textDisplay = this.components.get('text_display');
         if (textDisplay && typeof textDisplay.updateVisualState === 'function') 
@@ -110,16 +110,15 @@ class UIManager
     });
   }
 
-
   initLayoutStates(intensityId, colorId) 
   {
     const hud = this.components.get('primary_hud');
     if (hud) 
-      {
-      hud.updateVisualState('SET_RAIN_INTENSITY', intensityId);
-      hud.updateVisualState('SET_COLOR', colorId);
-      hud.updateVisualState('SET_SCROLL_SPEED', CONFIG.scroll.defaultSpeedSecs);
-      hud.updateVisualState('SET_MASTER_VOLUME', Math.round(CONFIG.masterVolume * 100));
+    {
+      hud.updateVisualState(CONFIG.UIActions.SET_RAIN_INTENSITY, intensityId);
+      hud.updateVisualState(CONFIG.UIActions.SET_COLOR, colorId);
+      hud.updateVisualState(CONFIG.UIActions.SET_SCROLL_SPEED, CONFIG.scroll.defaultSpeedSecs);
+      hud.updateVisualState(CONFIG.UIActions.SET_MASTER_VOLUME, Math.round(CONFIG.masterVolume * 100));
     }
   }
 

@@ -111,6 +111,13 @@ class RainVisuals
     this.root.style.setProperty('--op-rev',      s.opRev);
   }
 
+  setColor(id)
+  {
+    const c = CONFIG.colors[id];
+    this.root.style.setProperty('--text-color', c.color);
+    this.root.style.setProperty('--glow-color', c.glow);
+  }
+
   flashLightning({ crack, attackSecs, decaySecs })
   {
     clearTimeout(this._flashTimer);
@@ -137,10 +144,5 @@ class RainVisuals
     }, holdTimeSecs * 1000);
   }
 
-  setColor(id)
-  {
-    const c = CONFIG.colors[id];
-    this.root.style.setProperty('--text-color', c.color);
-    this.root.style.setProperty('--glow-color', c.glow);
-  }
+  
 }

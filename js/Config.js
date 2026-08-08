@@ -8,18 +8,32 @@
 // Dependencies: None (base-level dependency for all other files)
 
 // ── CONSTANTS ────────────────────────────────────────────────
-const INTENSITY_MODES = { 
-  SLOW: 'slow', 
-  MED: 'med', 
-  FAST: 'fast' 
-};
+const UI_ACTIONS = Object.freeze(
+{
+  SET_SCROLL_SPEED:   0,
+  SET_MASTER_VOLUME:  1,
+  TOGGLE_MUTE:        2,
+  SET_RAIN_INTENSITY: 3,
+  SET_COLOR:          4,
+  TOGGLE_SCROLL_MODE: 5,
+  SET_TEXT_MODE:      6
+});
+
+const RAIN_INTENSITY_MODES = Object.freeze(
+{ 
+  RAIN: 0, 
+  STORM: 1, 
+  TORRENT: 2 
+});
 
 // ── CONFIG DATA STRUCTURE ────────────────────────────────────
 const _configData = 
 {
   // ── Intensity Presets ──────────────────────────────────────
-  intensities: Object.freeze({
-    [INTENSITY_MODES.SLOW]: Object.freeze({
+  intensities: Object.freeze(
+  {
+    [RAIN_INTENSITY_MODES.RAIN]: Object.freeze(
+    {
       durAngled:   '1.3s',
       durStraight: '0.25s',
       durRev:      '1.3s',
@@ -30,7 +44,8 @@ const _configData =
       lightB:      '0.09',
     }),
     
-    [INTENSITY_MODES.MED]: Object.freeze({
+    [RAIN_INTENSITY_MODES.STORM]: Object.freeze(
+    {
       durAngled:   '0.18s',
       durStraight: '0.22s',
       durRev:      '0.15s',
@@ -41,7 +56,8 @@ const _configData =
       lightB:      '0.35',
     }),
 
-    [INTENSITY_MODES.FAST]: Object.freeze({
+    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze(
+    {
       durAngled:   '0.045s',
       durStraight: '0.055s',
       durRev:      '0.038s',
@@ -54,14 +70,16 @@ const _configData =
   }),
 
   // ── Color Themes ──────────────────────────────────────────
-  colors: Object.freeze({
+  colors: Object.freeze(
+  {
     red:   Object.freeze({ color: '#cc0000', glow: 'rgba(200,0,0,0.75)',   cls: 'active-red' }),
     green: Object.freeze({ color: '#00bb00', glow: 'rgba(0,185,0,0.75)',   cls: 'active-green' }),
     blue:  Object.freeze({ color: '#2255ff', glow: 'rgba(30,85,255,0.75)', cls: 'active-blue' }),
   }),
 
   // ── Audio Constants ───────────────────────────────────────
-  audio: Object.freeze({
+  audio: Object.freeze(
+  {
     noiseBufferSecs:   2,
     rainFilterFreq:    1000,
     rainFilterQ:       0.5,
@@ -82,52 +100,84 @@ const _configData =
     clickDecaySecs:    0.04,
   }),
 
-  // ── Weather System ────────────────────────────────────────
-  rainLevels: Object.freeze({ slow: 0.1, med: 0.25, fast: 0.5 }),
-
-  thunderDelay: Object.freeze({
-    slow: Object.freeze({ min: 15000, range: 15000 }),
-    med:  Object.freeze({ min: 8000,  range: 8000 }),
-    fast: Object.freeze({ min: 3000,  range: 4000 }),
+  // ── Weather System Dictionaries ────────────────────────────
+  rainLevels: Object.freeze(
+  {
+    [RAIN_INTENSITY_MODES.RAIN]:    0.1, 
+    [RAIN_INTENSITY_MODES.STORM]:   0.25, 
+    [RAIN_INTENSITY_MODES.TORRENT]: 0.5 
   }),
 
-  thunderCfg: Object.freeze({
-    slow: Object.freeze({ crack: 0.3,  rumble: 0.25,  rumbleLen: 2.5, fadeMin: 2.0, fadeMax: 1.0 }),
-    med:  Object.freeze({ crack: 0.8,  rumble: 0.65,  rumbleLen: 3.5, fadeMin: 3.0, fadeMax: 1.5 }),
-    fast: Object.freeze({ crack: 1.4,  rumble: 1.05,  rumbleLen: 5.0, fadeMin: 4.5, fadeMax: 2.0 }),
+  thunderDelay: Object.freeze(
+  {
+    [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ min: 15000, range: 15000 }),
+    [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ min: 8000,  range: 8000 }),
+    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ min: 3000,  range: 4000 }),
   }),
 
-  rumbleLayers: Object.freeze({ slow: 1, med: 2, fast: 3 }),
-  rumbleShelfGain: Object.freeze({ slow: 6, med: 14, fast: 20 }),
-  rumbleHiCut: Object.freeze({ slow: 300, med: 600, fast: 1200 }),
+  thunderCfg: Object.freeze(
+  {
+    [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ crack: 0.3,  rumble: 0.25,  rumbleLen: 2.5, fadeMin: 2.0, fadeMax: 1.0 }),
+    [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ crack: 0.8,  rumble: 0.65,  rumbleLen: 3.5, fadeMin: 3.0, fadeMax: 1.5 }),
+    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ crack: 1.4,  rumble: 1.05,  rumbleLen: 5.0, fadeMin: 4.5, fadeMax: 2.0 }),
+  }),
+
+  rumbleLayers: Object.freeze(
+  { 
+    [RAIN_INTENSITY_MODES.RAIN]:    1, 
+    [RAIN_INTENSITY_MODES.STORM]:   2, 
+    [RAIN_INTENSITY_MODES.TORRENT]: 3 
+  }),
+  
+  rumbleShelfGain: Object.freeze(
+  { 
+    [RAIN_INTENSITY_MODES.RAIN]:    6, 
+    [RAIN_INTENSITY_MODES.STORM]:   14, 
+    [RAIN_INTENSITY_MODES.TORRENT]: 20 
+  }),
+  
+  rumbleHiCut: Object.freeze(
+  { 
+    [RAIN_INTENSITY_MODES.RAIN]:    300, 
+    [RAIN_INTENSITY_MODES.STORM]:   600, 
+    [RAIN_INTENSITY_MODES.TORRENT]: 1200 
+  }),
 
   // ── UI Configuration ──────────────────────────────────────
-  hud: Object.freeze({
+  hud: Object.freeze(
+  {
     autoHideMs:    3000,
     transitionCss: 'opacity 0.6s ease, transform 0.6s ease',
   }),
 
-  scroll: Object.freeze({
+  scroll: Object.freeze(
+  {
     defaultSpeedSecs: 20,
     minSpeedSecs:     5,
     maxSpeedSecs:     40,
   }),
 
   // ── Visual Effects ────────────────────────────────────────
-  grain: Object.freeze({
+  grain: Object.freeze(
+  {
     alpha: 18,
   }),
 
   // ── Content ───────────────────────────────────────────────
-  text: Object.freeze({
+  text: Object.freeze(
+  {
     content: "It was a Dark and Stormy Night!!!",
   }),
+
 };
 
 // ── PUBLIC CONFIG INTERFACE ─────────────────────────────────
-const CONFIG = {
+const CONFIG = 
+{
   // Immutable property accessors
-  get intensities() { return _configData.intensities; },
+  get UIActions() { return UI_ACTIONS; },
+  get intensitiesModes() { return RAIN_INTENSITY_MODES; },
+  get intensities() { return _configData.intensities; }, 
   get colors() { return _configData.colors; },
   get audio() { return _configData.audio; },
   get rainLevels() { return _configData.rainLevels; },
@@ -144,7 +194,8 @@ const CONFIG = {
   // Mutable properties
   _masterVolume: 1,
   get masterVolume() { return this._masterVolume; },
-  set masterVolume(value) {
+  set masterVolume(value) 
+  {
     if (value >= 0 && value <= 1) this._masterVolume = value;
     else console.error('Volume must be between 0 and 1');
   },

@@ -28,11 +28,12 @@ class TextDisplay extends UIComponent
     this.mainText.textContent = textAsset;
     this.shadowText.textContent = textAsset;
 
+    ///FIXX look into clean up or some other way
     // ── SCROLLING TEXT SETUP ─────────────────────────────────
     this.scrollEl = document.createElement('div');
     this.scrollEl.id = 'dynamic-scroll-text';
     this.scrollEl.className = 'scroll-left';
-    this.scrollEl.innerHTML = '<p>It was a Dark and Stormy Night!!!</p>';
+    this.scrollEl.innerHTML = `<p>${CONFIG.text.content}</p>`;
     this.scrollEl.style.cursor = 'pointer';
     this.stage.appendChild(this.scrollEl);
     this.scrollText = this.scrollEl.querySelector('p');
@@ -41,88 +42,98 @@ class TextDisplay extends UIComponent
     this.stage.classList.remove('scrolling');
   }
 
-  updateVisualState(actionType, value) {
+  updateVisualState(actionType, value) 
+  {
     switch(actionType) {
-      case 'TOGGLE_SCROLL_MODE':
+      case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
         this.toggleScrollMode();
         break;
-      case 'SET_TEXT_MODE':
+      case CONFIG.UIActions.SET_TEXT_MODE:
         this.forceSetMode(value);
         break;
-      case 'SET_SCROLL_SPEED':
+      case CONFIG.UIActions.SET_SCROLL_SPEED:
         this.updateAnimationSpeed(value);
         break;
     }
   }
 
   // Returns event mapping configuration
-  getEventMaps() {
+  getEventMaps() 
+  {
     return [
       {
         elementId: 'text-toggle',
         eventType: 'click',
-        actionType: 'TOGGLE_SCROLL_MODE'
+        actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE
       },
       {
         elementId: 'dynamic-scroll-text', // <-- Added to register scrolling element click
         eventType: 'click',
-        actionType: 'TOGGLE_SCROLL_MODE'
+        actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE
       },
       {
         elementId: 'text-mode-static',
         eventType: 'click',
-        actionType: 'SET_TEXT_MODE',
+        actionType: CONFIG.UIActions.SET_TEXT_MODE,
         actionValue: false
       },
       {
         elementId: 'text-mode-scroll',
         eventType: 'click',
-        actionType: 'SET_TEXT_MODE',
+        actionType: CONFIG.UIActions.SET_TEXT_MODE,
         actionValue: true
       }
     ];
   }
 
-  /**
-   * Updates visual state based on action type
-   */
-  updateVisualState(actionType, value) {
-    switch(actionType) {
-      case 'TOGGLE_SCROLL_MODE':
-        this.toggleScrollMode();
-        break;
-      case 'SET_TEXT_MODE':
-        this.forceSetMode(value);
-        break;
-      case 'SET_SCROLL_SPEED':
-        this.updateAnimationSpeed(value);
-        break;
+  //Synchronized Timeline Entrypoint: Executed exclusively by EnvironmentController.
+  flashFont({ crack, attackSecs, decaySecs })
+  {
+    // Clear any existing flash timer to prevent animations from stepping on each other
+    clearTimeout(this._fontFlashTimer);
+
+    const targets = [this.mainText, this.shadowText, this.scrollText];
+
+    // 1. Trigger the flash by applying a data attribute and setting custom CSS variables
+    for (const el of targets)
+    {
+      if (!el) continue;
+      
+      // Pass dynamic timing configuration straight into CSS variables
+      el.style.setProperty('--flash-attack', `${attackSecs}s`);
+      el.style.setProperty('--flash-decay', `${decaySecs}s`);
+      
+      // Turn the flash on
+      el.dataset.flash = "active";
     }
+
+    // 2. Set timer to cleanly turn the flash state off after the attack phase completes
+    this._fontFlashTimer = setTimeout(() =>
+    {
+      for (const el of targets)
+      {
+        if (!el) continue;
+        el.dataset.flash = "inactive";
+      }
+    }, attackSecs * 1000);
   }
 
-  /**
-   * CENTRALIZED ENGINE CONNECTOR: 
-   * Allows the central Engine.js file to securely hook a master click listener 
-   * straight onto this dynamically spawned element once it is injected into the DOM.
-   */
+  //CENTRALIZED ENGINE CONNECTORs:
+  
+  // Allows the central Engine.js file to securely hook a master click listener straight onto this dynamically spawned 
+  // element once it is injected into the DOM.
   bindScrollElementClick(callbackFunction) 
   {
     this.scrollEl.addEventListener('click', callbackFunction);
   }
 
-  /**
-   * CENTRALIZED ENGINE CONNECTOR:
-   * Flips the active scrolling state back and forth cleanly.
-   */
+  // Flips the active scrolling state back and forth cleanly.
   toggleScrollMode() 
   {
     this.forceSetMode(!this.isScrolling);
   }
 
-  /**
-   * CENTRALIZED ENGINE CONNECTOR:
-   * Forcefully switches the layout to a specific layout mode state.
-   */
+  //Forcefully switches the layout to a specific layout mode state.
   forceSetMode(scrolling) 
   {
     this.isScrolling = scrolling;
@@ -131,10 +142,7 @@ class TextDisplay extends UIComponent
     this.stage.classList.toggle('scrolling', scrolling); 
   }
 
-  /**
-   * CENTRALIZED ENGINE CONNECTOR:
-   * Adjusts the CSS marquee scroll timeline duration whenever the UI slider shifts.
-   */
+  // Adjusts the CSS marquee scroll timeline duration whenever the UI slider shifts.
   updateAnimationSpeed(seconds) 
   {
     if (this.scrollText) {
@@ -142,38 +150,5 @@ class TextDisplay extends UIComponent
       this.scrollText.style.animationDuration = `${seconds}s`;
     }
   }
-
-
-//Synchronized Timeline Entrypoint: Executed exclusively by EnvironmentController.
-flashFont({ crack, attackSecs, decaySecs })
-{
-  // Clear any existing flash timer to prevent animations from stepping on each other
-  clearTimeout(this._fontFlashTimer);
-
-  const targets = [this.mainText, this.shadowText, this.scrollText];
-
-  // 1. Trigger the flash by applying a data attribute and setting custom CSS variables
-  for (const el of targets)
-  {
-    if (!el) continue;
-    
-    // Pass dynamic timing configuration straight into CSS variables
-    el.style.setProperty('--flash-attack', `${attackSecs}s`);
-    el.style.setProperty('--flash-decay', `${decaySecs}s`);
-    
-    // Turn the flash on
-    el.dataset.flash = "active";
-  }
-
-  // 2. Set timer to cleanly turn the flash state off after the attack phase completes
-  this._fontFlashTimer = setTimeout(() =>
-  {
-    for (const el of targets)
-    {
-      if (!el) continue;
-      el.dataset.flash = "inactive";
-    }
-  }, attackSecs * 1000);
-}
 
 }

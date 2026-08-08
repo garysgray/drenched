@@ -15,7 +15,4 @@ document.addEventListener('DOMContentLoaded', () =>
 {
   // Initialize core systems through Engine
   const engine = new Engine();
-  
-  // Start with default weather intensity and color theme
-  engine.start('slow', 'red');
 });
