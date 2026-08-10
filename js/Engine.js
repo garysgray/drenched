@@ -21,26 +21,17 @@ class Engine
         // Instantiate all core execution and visual layers on boot
         const textDisplayInstance = new TextDisplay();
 
-        // HUD receives its own configuration because HUD owns
-        // its auto-hide behavior and presentation lifecycle.
+        // HUD receives its own configuration because HUD owns its auto-hide behavior and presentation lifecycle.
         const HUDInstance = new HUD(CONFIG.hud);
 
         this.audio = new AudioManager(CONFIG.masterVolume);
         this.visuals = new RainVisuals();
 
-        this.environment = new EnvironmentController(
-            this.audio,
-            this.visuals,
-            textDisplayInstance
+        this.environment = new EnvironmentController(this.audio, this.visuals, textDisplayInstance
         );
 
         // UIManager only needs the systems it mediates.
-        // It no longer needs to know anything about HUD auto-hide.
-        this.ui = new UIManager(
-            this.audio,
-            this.visuals,
-            this.environment
-        );
+        this.ui = new UIManager(this.audio, this.visuals, this.environment);
 
         // ── UI COMPONENT REGISTRATION ─────────────────────────
         this.ui.registerComponent('primary_hud', HUDInstance);
@@ -50,10 +41,7 @@ class Engine
         document.addEventListener('click', () => this.audio.resume(), { once: true });
 
         // Start with default weather intensity and first configured color theme
-        this.start(
-            CONFIG.intensitiesModes.RAIN,
-            Object.keys(CONFIG.colors)[0]
-        );
+        this.start(CONFIG.intensitiesModes.RAIN, Object.keys(CONFIG.colors)[0]);
     }
 
     // ── SYSTEM STARTUP ────────────────────────────────────────
@@ -65,32 +53,17 @@ class Engine
         // Initialize visual color theme
         this.visuals.setColor(colorId);
 
-        // Build the initial UI state as data rather than passing
-        // individual settings directly into UIManager.
-        //
         // Engine owns startup configuration because Engine
         // coordinates initialization of all systems.
-        const initialStates = [
-            {
-                actionType: CONFIG.UIActions.SET_RAIN_INTENSITY,
-                value: intensityId
-            },
-            {
-                actionType: CONFIG.UIActions.SET_COLOR,
-                value: colorId
-            },
-            {
-                actionType: CONFIG.UIActions.SET_SCROLL_SPEED,
-                value: CONFIG.scroll.defaultSpeedSecs
-            },
-            {
-                actionType: CONFIG.UIActions.SET_MASTER_VOLUME,
-                value: Math.round(CONFIG.masterVolume * 100)
-            }
+        const initialStates = 
+        [
+            {actionType: CONFIG.UIActions.SET_RAIN_INTENSITY, value: intensityId },
+            {actionType: CONFIG.UIActions.SET_COLOR, value: colorId},
+            {actionType: CONFIG.UIActions.SET_SCROLL_SPEED, value: CONFIG.scroll.defaultSpeedSecs},
+            {actionType: CONFIG.UIActions.SET_MASTER_VOLUME, value: Math.round(CONFIG.masterVolume * 100)}
         ];
 
-        // Send the complete initial state to UIManager.
-        // UIManager distributes it to registered components.
+        // Send the complete initial state to UIManager. UIManager distributes it to registered components.
         this.ui.initLayoutStates(initialStates);
     }
 

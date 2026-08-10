@@ -164,7 +164,6 @@ class AudioManager
     };
   }
 
-
   static createNoiseBuffer(ctx, durationSecs)
   {
     // Create a white noise buffer of the specified duration
@@ -308,8 +307,10 @@ class AudioManager
     
     Object.keys(this._loops).forEach(name => this.stopLoop(name));
 
-    this._oneShotPool.forEach(channel => {
-      if (channel.source) {
+    this._oneShotPool.forEach(channel => 
+    {
+      if (channel.source) 
+      {
         try { channel.source.stop(); } catch (_) {}
       }
       channel.inUse = false;
@@ -317,7 +318,8 @@ class AudioManager
 
     if (this.ctx && typeof this.ctx.close === 'function')
     {
-      this.ctx.close().then(() => {
+      this.ctx.close().then(() => 
+      {
         console.log("AudioManager: AudioContext closed cleanly.");
       });
     }

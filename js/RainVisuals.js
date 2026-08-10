@@ -134,30 +134,52 @@ class RainVisuals
     });
   }
 
-  flashLightning({ crack, attackSecs, decaySecs })
+  flashLightning({ lightningPeak, attackSecs, decaySecs })
   {
-    clearTimeout(this._flashTimer);
+      if (!this.lightning)
+      {
+          return;
+      }
 
-    const peak = Math.min(1, crack);
-    const target = this.lightning;
+      // Cancel the previous lightning reset timer.
+      clearTimeout(this._flashTimer);
 
-    // Pass the dynamic timeline durations straight into CSS variables
-    target.style.setProperty('--lightning-attack', `${attackSecs}s`);
-    target.style.setProperty('--lightning-decay', `${decaySecs}s`);
-    target.style.setProperty('--lightning-peak', String(peak));
+      // Configure the exact timing for THIS strike.
+      this.lightning.style.setProperty(
+          '--lightning-attack',
+          `${attackSecs}s`
+      );
 
-    // Trigger the animation via the hardware-accelerated attribute state
-    target.dataset.flash = "active";
+      this.lightning.style.setProperty(
+          '--lightning-decay',
+          `${decaySecs}s`
+      );
 
-    // Keep the active state alive long enough for the browser 
-    // to complete its paint frames over network execution contexts.
-    // Instead of killing it at attackSecs (0.05s), wait until the fade starts.
-    const holdTimeSecs = attackSecs + 0.05; 
+      this.lightning.style.setProperty(
+          '--lightning-peak',
+          String(Math.min(1, lightningPeak))
+      );
 
-    this._flashTimer = setTimeout(() =>
-    {
-      target.dataset.flash = "inactive";
-    }, holdTimeSecs * 1000);
+      console.log(
+          '[LIGHTNING] FLASH',
+          {
+              peak: lightningPeak,
+              attack: attackSecs,
+              decay: decaySecs
+          }
+      );
+
+      // Trigger the lightning flash.
+      this.lightning.dataset.flash = 'active';
+
+      // Give the browser enough time to complete the visual
+      // transition before removing the active state.
+      this._flashTimer = setTimeout(() =>
+      {
+          if (this.lightning)
+          {
+              this.lightning.dataset.flash = 'inactive';
+          }
+      }, (attackSecs + decaySecs) * 1000);
   }
-
 }

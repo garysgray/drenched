@@ -128,67 +128,66 @@ class TextDisplay extends UIComponent
   //
   // The timing values are supplied by the environment system so
   // TextDisplay does not need to know how the weather timing works.
-  flashFont({ crack, attackSecs, decaySecs })
-{
-console.log('[TEXT] flashFont FIRED', {
-crack,
-attackSecs,
-decaySecs,
-mainText: !!this.mainText,
-shadowText: !!this.shadowText,
-scrollText: !!this.scrollText
-});
+  flashFont({ attackSecs, decaySecs })
+  {
+      clearTimeout(this._fontFlashTimer);
 
+      const targets =
+      [
+          this.mainText,
+          this.shadowText,
+          this.scrollText
+      ];
 
-// Clear any previous flash timer so overlapping strikes
-// cannot leave an old timer controlling the current flash.
-clearTimeout(this._fontFlashTimer);
+      console.log(
+          '[TEXT] FONT FLASH',
+          {
+              attack: attackSecs,
+              decay: decaySecs,
+              targets: targets.filter(Boolean).length
+          }
+      );
 
-const targets = [
-    this.mainText,
-    this.shadowText,
-    this.scrollText
-];
+      // Apply the exact same timing used by the lightning strike.
+      for (const el of targets)
+      {
+          if (!el)
+          {
+              continue;
+          }
 
-// Keep the font flash active for the same duration
-// used by RainVisuals.flashLightning().
-const holdTimeSecs = attackSecs + 0.05;
+          el.style.setProperty(
+              '--flash-attack',
+              `${attackSecs}s`
+          );
 
-// Configure and activate all text targets together.
-for (const el of targets)
-{
-    if (!el)
-    {
-        continue;
-    }
+          el.style.setProperty(
+              '--flash-decay',
+              `${decaySecs}s`
+          );
 
-    el.style.setProperty('--flash-attack', `${attackSecs}s`);
-    el.style.setProperty('--flash-decay', `${decaySecs}s`);
+          // Trigger the font flash.
+          el.dataset.flash = 'active';
+      }
 
-    el.dataset.flash = "active";
+      // Remove the active state after the complete visual
+      // flash transition has had time to run.
+      this._fontFlashTimer = setTimeout(() =>
+      {
+          for (const el of targets)
+          {
+              if (!el)
+              {
+                  continue;
+              }
 
-    console.log('[TEXT] Activating flash:', el);
-}
+              el.dataset.flash = 'inactive';
+          }
 
-// Deactivate the font at the same time as the lightning layer.
-this._fontFlashTimer = setTimeout(() =>
-{
-    for (const el of targets)
-    {
-        if (!el)
-        {
-            continue;
-        }
+          console.log('[TEXT] FONT FLASH COMPLETE');
 
-        el.dataset.flash = "inactive";
-    }
-
-    console.log('[TEXT] Flash deactivated');
-}, holdTimeSecs * 1000);
-
-
-}
-
+      }, (attackSecs + decaySecs) * 1000);
+  }
 
   // ── SCROLL CLICK CONNECTOR ────────────────────────────────
   // Allows another system to attach a callback to the dynamically

@@ -108,19 +108,91 @@ const _configData =
     [RAIN_INTENSITY_MODES.TORRENT]: 0.5 
   }),
 
-  thunderDelay: Object.freeze(
-  {
-    [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ min: 15000, range: 15000 }),
-    [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ min: 8000,  range: 8000 }),
-    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ min: 3000,  range: 4000 }),
-  }),
+  // thunderDelay: Object.freeze(
+  // {
+  //   [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ min: 15000, range: 15000 }),
+  //   [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ min: 8000,  range: 8000 }),
+  //   [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ min: 3000,  range: 4000 }),
+  // }),
 
-  thunderCfg: Object.freeze(
-  {
-    [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ crack: 0.3,  rumble: 0.25,  rumbleLen: 2.5, fadeMin: 2.0, fadeMax: 1.0 }),
-    [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ crack: 0.8,  rumble: 0.65,  rumbleLen: 3.5, fadeMin: 3.0, fadeMax: 1.5 }),
-    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ crack: 1.4,  rumble: 1.05,  rumbleLen: 5.0, fadeMin: 4.5, fadeMax: 2.0 }),
-  }),
+  // thunderCfg: Object.freeze(
+  // {
+  //   [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ crack: 0.3,  rumble: 0.25,  rumbleLen: 2.5, fadeMin: 2.0, fadeMax: 1.0 }),
+  //   [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ crack: 0.8,  rumble: 0.65,  rumbleLen: 3.5, fadeMin: 3.0, fadeMax: 1.5 }),
+  //   [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ crack: 1.4,  rumble: 1.05,  rumbleLen: 5.0, fadeMin: 4.5, fadeMax: 2.0 }),
+  // }),
+  // ── THUNDER / LIGHTNING STRIKE CONFIGURATION ───────────────
+//
+// Every thunder event is treated as ONE complete strike.
+//
+// One scheduled strike produces:
+//   1. Lightning
+//   2. Font flash
+//   3. Thunder crack
+//   4. Thunder rumble
+//
+// The delay controls how long we wait before creating the NEXT
+// complete strike. The visual/audio settings control that strike.
+
+thunder: Object.freeze(
+{
+    [RAIN_INTENSITY_MODES.RAIN]: Object.freeze(
+    {
+        // Time between complete storm strikes
+        minDelay: 15000,
+        delayRange: 15000,
+
+        // Thunder
+        crackVolume: 0.3,
+        rumbleVolume: 0.25,
+        rumbleLength: 2.5,
+        fadeMin: 2.0,
+        fadeMax: 1.0,
+
+        // Lightning + font flash
+        lightningPeak: 0.3,
+        flashAttack: 0.002,
+        flashDecay: 0.12
+    }),
+
+    [RAIN_INTENSITY_MODES.STORM]: Object.freeze(
+    {
+        // Time between complete storm strikes
+        minDelay: 8000,
+        delayRange: 8000,
+
+        // Thunder
+        crackVolume: 0.8,
+        rumbleVolume: 0.65,
+        rumbleLength: 3.5,
+        fadeMin: 3.0,
+        fadeMax: 1.5,
+
+        // Lightning + font flash
+        lightningPeak: 0.8,
+        flashAttack: 0.002,
+        flashDecay: 0.15
+    }),
+
+    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze(
+    {
+        // Time between complete storm strikes
+        minDelay: 3000,
+        delayRange: 4000,
+
+        // Thunder
+        crackVolume: 1.0,
+        rumbleVolume: 1.0,
+        rumbleLength: 5.0,
+        fadeMin: 4.5,
+        fadeMax: 2.0,
+
+        // Lightning + font flash
+        lightningPeak: 1.0,
+        flashAttack: 0.002,
+        flashDecay: 0.18
+    })
+}),
 
   rumbleLayers: Object.freeze(
   { 
@@ -181,8 +253,9 @@ const CONFIG =
   get colors() { return _configData.colors; },
   get audio() { return _configData.audio; },
   get rainLevels() { return _configData.rainLevels; },
-  get thunderDelay() { return _configData.thunderDelay; },
-  get thunderCfg() { return _configData.thunderCfg; },
+ // get thunderDelay() { return _configData.thunderDelay; },
+ // get thunderCfg() { return _configData.thunderCfg; },
+ get thunder() { return _configData.thunder; },
   get rumbleLayers() { return _configData.rumbleLayers; },
   get rumbleShelfGain() { return _configData.rumbleShelfGain; },
   get rumbleHiCut() { return _configData.rumbleHiCut; },
