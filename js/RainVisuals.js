@@ -13,6 +13,7 @@ class RainVisuals
   {
     // Cache root element for CSS variable access
     this.root = document.documentElement;
+
     
     // Reference visual layer elements
     this.rainAngled   = document.getElementById('rain-angled');
@@ -81,18 +82,21 @@ class RainVisuals
   _preGenerateGrainTextures() 
   {
     this._grainTextures = {};
-    for (const intensity in CONFIG.intensities) {
+    for (const intensity in CONFIG.intensities) 
+    {
       this._grainTextures[intensity] = this._createTexture(CONFIG.grain.alpha);
     }
   }
 
   destroy()
   {
-    if (this._resizeHandler) {
+    if (this._resizeHandler) 
+    {
       window.removeEventListener('resize', this._resizeHandler);
       this._resizeHandler = null;
     }
-    if (this._flashTimer) {
+    if (this._flashTimer) 
+    {
       clearTimeout(this._flashTimer);
       this._flashTimer = null;
     }
@@ -102,21 +106,34 @@ class RainVisuals
   {
     const s = CONFIG.intensities[id];
 
-    this.rainAngled.style.animationDuration   = s.durAngled;
-    this.rainStraight.style.animationDuration = s.durStraight;
-    this.rainRev.style.animationDuration      = s.durRev;
+    requestAnimationFrame(() => 
+    {
+      if (this.rainAngled) this.rainAngled.style.animationDuration = s.durAngled;
+      if (this.rainStraight) this.rainStraight.style.animationDuration = s.durStraight;
+      if (this.rainRev) this.rainRev.style.animationDuration = s.durRev;
 
-    this.root.style.setProperty('--op-angled',   s.opAngled);
-    this.root.style.setProperty('--op-straight', s.opStraight);
-    this.root.style.setProperty('--op-rev',      s.opRev);
+      if (this.root) {
+        this.root.style.setProperty('--op-angled',   s.opAngled);
+        this.root.style.setProperty('--op-straight', s.opStraight);
+        this.root.style.setProperty('--op-rev',      s.opRev);
+      }
+    });
   }
 
+  // BATCHED OPTIMIZATION: Updates text color variable parameters smoothly
   setColor(id)
   {
     const c = CONFIG.colors[id];
-    this.root.style.setProperty('--text-color', c.color);
-    this.root.style.setProperty('--glow-color', c.glow);
+    requestAnimationFrame(() => 
+    {
+      if (this.root) 
+      {
+        this.root.style.setProperty('--text-color', c.color);
+        this.root.style.setProperty('--glow-color', c.glow);
+      }
+    });
   }
+
 
   flashLightning({ crack, attackSecs, decaySecs })
   {

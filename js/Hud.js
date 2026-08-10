@@ -108,7 +108,8 @@ class HUD extends UIComponent
       }
     });
 
-    requestAnimationFrame(() => {
+    requestAnimationFrame(() => 
+    {
       updates.forEach(({ el, className }) => el.className = className);
     });
   }

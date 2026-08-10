@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────
-// ── AUDIOMANAGER ─────────────────────────────────────────────
+// ── AUDIOMANAGER — PART 1 ────────────────────────────────────
 // ──────────────────────────────────────────────────────────────
 //
 // Description: Core audio system handling all sound synthesis and playback
@@ -19,7 +19,7 @@ class AudioManager
     this._preMuteVolume = initialVolume;
     this._masterVolume = initialVolume;
 
-     // ── SAFARI/iOS AUTO-WAKE TRIGGER GUARD ────────────────────
+    // ── SAFARI/iOS AUTO-WAKE TRIGGER GUARD ────────────────────
     if (this.ctx.state === 'suspended') 
     {
       this.ctx.onstatechange = () => 
@@ -53,7 +53,6 @@ class AudioManager
    * @param {object} params - Recipe-specific parameters
    * @param {number|null} customStartTime - Optional AudioContext timestamp
    */
-
   play(assetKey, params = {}, customStartTime = null) 
   {
     // Look up the specific "cooking recipe" for this sound (e.g., 'ui_click' or 'raindrop')
@@ -100,30 +99,6 @@ class AudioManager
     this.playOneShot(buffer, filterConfigs, envelope);
   }
 
-  stopAll()
-  {
-    console.log("AudioManager: Disposing active synthesizers and looping nodes...");
-    
-    // 1. Terminate running ambient weather loops
-    Object.keys(this._loops).forEach(name => this.stopLoop(name));
-
-    // 2. Clear out the pre-connected pool hooks
-    this._oneShotPool.forEach(channel => {
-      if (channel.source) {
-        try { channel.source.stop(); } catch (_) {}
-      }
-      channel.inUse = false;
-    });
-
-    // 3. Formally close hardware audio stream pipelines
-    if (this.ctx && typeof this.ctx.close === 'function')
-    {
-      this.ctx.close().then(() => {
-        console.log("AudioManager: AudioContext closed cleanly.");
-      });
-    }
-  }
-
   // Builds and permanently hooks up channels to the master graph at initialization.
   _initNodePools()
   {
@@ -152,6 +127,43 @@ class AudioManager
       }); 
     }
   }
+  // ── AUDIOMANAGER — PART 2 ────────────────────────────────────
+  // Fallback helper pipeline to link up one-shot configurations cleanly
+    // Reusable channel worker method that completely replaces runtime node instantiation.
+  playOneShot(buffer, filter, envelope = {})
+  {
+    const startTime = envelope.startTime ?? this.ctx.currentTime;
+
+    // Find an available pre-connected channel node in our static memory array pool
+    const channel = this._oneShotPool.find(ch => !ch.inUse || this.ctx.currentTime > ch.endTime);
+    if (!channel) return; // Drop sound if the game is somehow violently overloading sounds
+
+    channel.inUse = true;
+    channel.endTime = startTime + (envelope.endTime ?? 0.5);
+
+    // Reset and apply filter arrays cleanly to the static slots
+    const filterConfigs = filter ? (Array.isArray(filter) ? filter : [filter]) : [];
+    this._configureFilter(channel.filters[0], filterConfigs[0]);
+    this._configureFilter(channel.filters[1], filterConfigs[1]);
+
+    // Spin up just the source, wire it to the permanent track input, and execute envelope
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(channel.filters[0]); // <-- Kept exactly as your original code intended!
+
+    this._applyEnvelope(channel.gain.gain, envelope, startTime);
+    source.start(startTime);
+    
+    channel.source = source;
+
+    // ── THE ONLY PERFORMANCE FIX REQUIRED ──
+    // When the noise buffer naturally finishes playing, reclaim this pool node safely
+    source.onended = () => {
+      channel.inUse = false;
+      channel.source = null;
+    };
+  }
+
 
   static createNoiseBuffer(ctx, durationSecs)
   {
@@ -251,85 +263,63 @@ class AudioManager
 
     const now = this.ctx.currentTime;
     const safeValue = isFinite(value) ? value : 0;
-    
+
     if (timeConstant > 0) {
-      const safeTimeConstant = Math.max(0.001, isFinite(timeConstant) ? timeConstant : 0.1);
-      loop.gain.gain.setTargetAtTime(safeValue, now, safeTimeConstant);
+      loop.gain.gain.setTargetAtTime(safeValue, now, timeConstant);
     } else {
       loop.gain.gain.setValueAtTime(safeValue, now);
     }
   }
 
-  // Reusable channel worker method that completely replaces runtime node instantiation.
-  playOneShot(buffer, filter, envelope = {})
-  {
-    const startTime = envelope.startTime ?? this.ctx.currentTime;
-
-    // Find an available pre-connected channel node in our static memory array pool
-    const channel = this._oneShotPool.find(ch => !ch.inUse || this.ctx.currentTime > ch.endTime);
-    if (!channel) return; // Drop sound if the game is somehow violently overloading sounds
-
-    channel.inUse = true;
-    channel.endTime = startTime + (envelope.endTime ?? 0.5);
-
-    // Reset and apply filter arrays cleanly to the static slots
-    const filterConfigs = filter ? (Array.isArray(filter) ? filter : [filter]) : [];
-    this._configureFilter(channel.filters[0], filterConfigs[0]);
-    this._configureFilter(channel.filters[1], filterConfigs[1]);
-
-    // Spin up just the source, wire it to the permanent track input, and execute envelope
-    const source = this.ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(channel.filters[0]);
-
-    this._applyEnvelope(channel.gain.gain, envelope, startTime);
-    source.start(startTime);
-    
-    channel.source = source;
-  }
-
+  // ── DYNAMIC ENGINE MODULATORS ──────────────────────────────
   setMasterVolume(value)
   {
-    let numericValue = parseFloat(value);
-    if (isNaN(numericValue)) {
-      numericValue = 1; 
-    }
-
-    const vol = Math.max(0, Math.min(1, numericValue));
-    
-    this._masterVolume = vol;
-    this._preMuteVolume = vol;
-    CONFIG.masterVolume  = vol;
-
-    // RESUME CHECK: Fixes browser autoplay/interaction blocks
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-
-    if (!this.muted && this.masterGain) {
-      this.masterGain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    this._masterVolume = value;
+    if (!this.muted && this.masterGain)
+    {
+      this.masterGain.gain.setValueAtTime(value, this.ctx.currentTime);
     }
   }
 
   toggleMute()
   {
-    if (this.muted)
+    this.muted = !this.muted;
+    const targetVolume = this.muted ? 0 : this._masterVolume;
+    if (this.masterGain) 
     {
-      this.muted = false;
-      this.masterGain.gain.setValueAtTime(this._preMuteVolume, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(targetVolume, this.ctx.currentTime);
     }
-    else
-    {
-      this._preMuteVolume = this._masterVolume;
-      this.muted          = true;
-      this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
-    }
-
     return this.muted;
   }
 
   resume()
   {
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx && typeof this.ctx.resume === 'function') 
+    {
+      return this.ctx.resume();
+    }
+    return Promise.resolve();
+  }
+
+  // ── MASTER TEARDOWN PIPELINE ────────────────────────────────
+  stopAll()
+  {
+    console.log("AudioManager: Disposing active synthesizers and looping nodes...");
+    
+    Object.keys(this._loops).forEach(name => this.stopLoop(name));
+
+    this._oneShotPool.forEach(channel => {
+      if (channel.source) {
+        try { channel.source.stop(); } catch (_) {}
+      }
+      channel.inUse = false;
+    });
+
+    if (this.ctx && typeof this.ctx.close === 'function')
+    {
+      this.ctx.close().then(() => {
+        console.log("AudioManager: AudioContext closed cleanly.");
+      });
+    }
   }
 }

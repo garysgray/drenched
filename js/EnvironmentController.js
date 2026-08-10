@@ -26,6 +26,7 @@ class EnvironmentController
   // Initialize the persistent rain audio layer
   _initRainLoop() 
   {
+    if (!this.audio || !this.audio.ctx) return;
     const a = CONFIG.audio;
     const buffer = AudioManager.createNoiseBuffer(this.audio.ctx, a.noiseBufferSecs);
     this.audio.startLoopingNoise('rain', buffer, 
@@ -39,12 +40,8 @@ class EnvironmentController
   // Handle all weather intensity changes
   changeIntensity(id) 
   {
-    // Update rain visuals
-    this.visuals.setIntensity(id);
-    
-    // Update audio levels
-    this.audio.setLoopGain('rain', CONFIG.rainLevels[id], CONFIG.audio.rainGainFadeTime);
-    
+    if (this.visuals) this.visuals.setIntensity(id);
+    if (this.audio) this.audio.setLoopGain('rain', CONFIG.rainLevels[id], CONFIG.audio.rainGainFadeTime);
     // Reset thunder scheduling
     this._scheduleNextStrike(id);
   }
@@ -86,6 +83,7 @@ class EnvironmentController
   // Audio effect methods (moved from RainSounds)
   _playRumble(now, cfg, intensity) 
   {
+    if (!this.audio) return;
     const a = CONFIG.audio;
     const layerCount = CONFIG.rumbleLayers[intensity];
     
@@ -118,5 +116,20 @@ class EnvironmentController
       this._executeStormStrike(intensity);
       this._scheduleNextStrike(intensity); // Loop
     }, delay);
+  }
+
+  // ── COMPLETE LIFE CYCLE TEARDOWN ───────────────────────────
+  destroy()
+  {
+    // Force the background lightning/thunder timeline generator clock to stop dead
+    clearTimeout(this.thunderTimer);
+    this.thunderTimer = null;
+
+    // Erase the pointer pathways to prevent heap layout anchoring leaks
+    this.audio = null;
+    this.visuals = null;
+    this.text = null;
+
+    console.log("EnvironmentController: Background strike clocks and interval engines terminated.");
   }
 }

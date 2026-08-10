@@ -44,23 +44,30 @@ class Engine
     this.ui.initLayoutStates(intensityId, colorId);
   }
 
+  // ── MASTER CLEANUP LIFECYCLE ───────────────────────────────
   shutdown()
   {
     console.log("Engine: Commencing complete system teardown...");
 
-    // 1. Force the UI Manager to cut its global window mouse/touch ropes
-    if (this.ui && typeof this.ui.destroy === 'function') 
+    // Clear out registered UI Components (TextDisplay, HUD, etc.)
+    if (this.ui && this.ui.components) 
     {
-      this.ui.destroy();
+      this.ui.components.forEach((component) => 
+      {
+        if (component && typeof component.destroy === 'function') 
+        {
+          component.destroy();
+        }
+      });
     }
 
-    // 2. Tell your audio manager to stop running oscillators/loops if it has a stop function
-    if (this.audio && typeof this.audio.stopAll === 'function')
-    {
-      this.audio.stopAll();
-    }
+    // Clear out core engine infrastructure layers explicitly
+    if (this.ui && typeof this.ui.destroy === 'function')                   this.ui.destroy();
+    if (this.audio && typeof this.audio.stopAll === 'function')             this.audio.stopAll();
+    if (this.visuals && typeof this.visuals.destroy === 'function')         this.visuals.destroy();
+    if (this.environment && typeof this.environment.destroy === 'function') this.environment.destroy();
 
-    // 3. Nullify references so the Garbage Collector knows they are completely fair game to delete
+    // Sever all remaining object ties for the Garbage Collector
     this.audio       = null;
     this.visuals     = null;
     this.environment = null;
@@ -68,5 +75,7 @@ class Engine
 
     console.log("Engine: Teardown complete. All memory links severed safely.");
   }
+
+
 }
 
