@@ -13,6 +13,6 @@
 
 document.addEventListener('DOMContentLoaded', () => 
 {
-  // Initialize core systems through Engine
-  const engine = new Engine();
+  // Attach the instance to the window object so the debugger can access it
+  window.engine = new Engine();
 });

@@ -47,7 +47,6 @@ class HUD extends UIComponent
     ];
 
     // Safely generate rain maps via CONFIG public gateway
-    // Converts key 'RAIN' to elementId 'rain', and matches actionValue to numeric enum 0
     const rainMaps = Object.entries(CONFIG.intensitiesModes).map(([key, value]) => 
     {
       return {
@@ -59,41 +58,58 @@ class HUD extends UIComponent
     });
 
     // Safely generate color maps via CONFIG themes
-    // Pulls 'red', 'green', 'blue' keys automatically right out of config data
     const colorMaps = Object.keys(CONFIG.colors).map((colorKey) => 
     {
       return {
-        elementId: colorKey, // Matches HTML ids "red", "green", "blue"
+        elementId: colorKey, 
         eventType: 'click',
         actionType: CONFIG.UIActions.SET_COLOR,
         actionValue: colorKey
       };
     });
 
-    // Merge the collections using spread parameters to feed UIComponent
     return [...baseMaps, ...rainMaps, ...colorMaps];
   }
 
-  //  Updates visual highlights for rain intensity buttons using public config keys.
+  // BATCHED OPTIMIZATION: Updates visual highlights for rain intensity buttons cleanly
   syncSpeedButtonUI(activeValue) 
   {
-    Object.entries(CONFIG.intensitiesModes).forEach(([key, value]) => {
+    const updates = [];
+
+    // Calculate state string purely in memory first
+    Object.entries(CONFIG.intensitiesModes).forEach(([key, value]) => 
+    {
       const el = document.getElementById(key.toLowerCase());
-      if (el) {
-        el.className = (value === activeValue) ? 'active-speed' : '';
+      if (el) 
+      {
+        const className = (value === activeValue) ? 'active-speed' : '';
+        updates.push({ el, className });
       }
+    });
+
+    // Paint all elements to the DOM in a single rendering animation frame
+    requestAnimationFrame(() => {
+      updates.forEach(({ el, className }) => el.className = className);
     });
   }
 
-  // Updates visual highlights for theme colors based on CONFIG records.
+  // BATCHED OPTIMIZATION: Updates visual highlights for theme colors based on CONFIG records
   syncColorButtonUI(activeColorKey) 
   {
-    Object.entries(CONFIG.colors).forEach(([colorKey, colorConfig]) => {
+    const updates = [];
+
+    Object.entries(CONFIG.colors).forEach(([colorKey, colorConfig]) => 
+    {
       const el = document.getElementById(colorKey);
-      if (el) {
-        // Reads classes ('active-red', 'active-green', etc.) safely from config definitions
-        el.className = (colorKey === activeColorKey) ? colorConfig.cls : '';
+      if (el) 
+      {
+        const className = (colorKey === activeColorKey) ? colorConfig.cls : '';
+        updates.push({ el, className });
       }
+    });
+
+    requestAnimationFrame(() => {
+      updates.forEach(({ el, className }) => el.className = className);
     });
   }
 
@@ -119,33 +135,32 @@ class HUD extends UIComponent
         break;
       case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
       case CONFIG.UIActions.SET_TEXT_MODE:
-        const isScrolling = !!value;
-        const speedGroup = document.getElementById('scroll-speed-group');
-        const divider = document.getElementById('scroll-speed-divider');
-        if (speedGroup) speedGroup.style.display = isScrolling ? 'flex' : 'none';
-        if (divider) divider.style.display = isScrolling ? 'block' : 'none';
-        
-        this.syncTextMenuSlider(isScrolling);
+        this.syncTextMenuSlider(!!value);
         break;
     }
   }
 
-  // Syncs the text mode button highlights and opens/closes the slider panel.
+  // BATCHED OPTIMIZATION: Syncs the text mode button highlights and sets displays in one cycle
   syncTextMenuSlider(isScrolling) 
   {
     const staticBtn = document.getElementById('text-mode-static');
     const scrollBtn = document.getElementById('text-mode-scroll');
     const speedGroup = document.getElementById('scroll-speed-group');
     const divider = document.getElementById('scroll-speed-divider');
+    const displayValue = isScrolling ? 'flex' : 'none';
+    const blockValue = isScrolling ? 'block' : 'none';
 
-    if (staticBtn) staticBtn.className = isScrolling ? '' : 'active-speed';
-    if (scrollBtn) scrollBtn.className = isScrolling ? 'active-speed' : '';
-    if (speedGroup) speedGroup.style.display = isScrolling ? 'flex' : 'none';
-    if (divider) divider.style.display = isScrolling ? 'block' : 'none';
+    // Queue up the structural changes to execute cleanly during the next screen paint stride
+    requestAnimationFrame(() => 
+    {
+      if (staticBtn) staticBtn.className = isScrolling ? '' : 'active-speed';
+      if (scrollBtn) scrollBtn.className = isScrolling ? 'active-speed' : '';
+      if (speedGroup) speedGroup.style.display = displayValue;
+      if (divider) divider.style.display = blockValue;
+    });
   }
 
   // Setup initial text scroll slider bounds using values directly from config.js
-
   initScrollSlider() 
   {
     if (this.slider) 
@@ -157,7 +172,7 @@ class HUD extends UIComponent
     }
   }
 
-  // Updates the visual duration numbers label next to the scroll speed bar.
+  // Updates the visual duration numbers label next to the scroll speed bar
   updateSliderLabel() 
   {
     if (this.label && this.slider) 
@@ -166,7 +181,7 @@ class HUD extends UIComponent
     }
   }
 
-  // Seed starting volume layout numbers based on configurations.
+  // Seed starting volume layout numbers based on configurations
   initVolumeUI()
   {
     if (this.volSlider && this.volLabel) 
@@ -176,7 +191,7 @@ class HUD extends UIComponent
     }
   }
 
-  // Instantly synchronizes the text percentage readout label on screen.
+  // Instantly synchronizes the text percentage readout label on screen
   updateVolumeLabel()
   {
     if (this.volLabel && this.volSlider) 
@@ -184,13 +199,18 @@ class HUD extends UIComponent
       this.volLabel.textContent = `${this.volSlider.value}%`;
     }
   }
-  // Checks system properties to accurately alter text labels and styling layouts.
+
+  // Checks system properties to accurately alter text labels and styling layouts
   updateMuteButtonVisuals(isMuted)
   {
     if (this.muteBtn) 
     {
-      this.muteBtn.className   = isMuted ? 'active-speed' : ''; 
-      this.muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';   
+      // Text updates are cheap, but we queue style updates nicely
+      requestAnimationFrame(() => 
+      {
+        this.muteBtn.className   = isMuted ? 'active-speed' : ''; 
+        this.muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';   
+      });
     }
   }
 }

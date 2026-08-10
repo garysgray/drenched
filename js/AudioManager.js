@@ -19,6 +19,18 @@ class AudioManager
     this._preMuteVolume = initialVolume;
     this._masterVolume = initialVolume;
 
+     // ── SAFARI/iOS AUTO-WAKE TRIGGER GUARD ────────────────────
+    if (this.ctx.state === 'suspended') 
+    {
+      this.ctx.onstatechange = () => 
+      {
+        if (this.ctx.state === 'running') 
+        {
+          console.log("AudioManager: Audio pipeline unlocked by user gesture. Synthesizers online.");
+        }
+      };
+    }
+
     // ── AUDIO GRAPH SETUP ─────────────────────────────────────
     // Create master gain node (final output stage)
     this.masterGain = this.ctx.createGain();
@@ -86,6 +98,30 @@ class AudioManager
 
     //  Fire the synthesizers! Feed the random static noise through the filters and volume envelopes to play the sound.
     this.playOneShot(buffer, filterConfigs, envelope);
+  }
+
+  stopAll()
+  {
+    console.log("AudioManager: Disposing active synthesizers and looping nodes...");
+    
+    // 1. Terminate running ambient weather loops
+    Object.keys(this._loops).forEach(name => this.stopLoop(name));
+
+    // 2. Clear out the pre-connected pool hooks
+    this._oneShotPool.forEach(channel => {
+      if (channel.source) {
+        try { channel.source.stop(); } catch (_) {}
+      }
+      channel.inUse = false;
+    });
+
+    // 3. Formally close hardware audio stream pipelines
+    if (this.ctx && typeof this.ctx.close === 'function')
+    {
+      this.ctx.close().then(() => {
+        console.log("AudioManager: AudioContext closed cleanly.");
+      });
+    }
   }
 
   // Builds and permanently hooks up channels to the master graph at initialization.

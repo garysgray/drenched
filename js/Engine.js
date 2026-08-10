@@ -43,5 +43,30 @@ class Engine
     // Configure UI initial states
     this.ui.initLayoutStates(intensityId, colorId);
   }
+
+  shutdown()
+  {
+    console.log("Engine: Commencing complete system teardown...");
+
+    // 1. Force the UI Manager to cut its global window mouse/touch ropes
+    if (this.ui && typeof this.ui.destroy === 'function') 
+    {
+      this.ui.destroy();
+    }
+
+    // 2. Tell your audio manager to stop running oscillators/loops if it has a stop function
+    if (this.audio && typeof this.audio.stopAll === 'function')
+    {
+      this.audio.stopAll();
+    }
+
+    // 3. Nullify references so the Garbage Collector knows they are completely fair game to delete
+    this.audio       = null;
+    this.visuals     = null;
+    this.environment = null;
+    this.ui          = null;
+
+    console.log("Engine: Teardown complete. All memory links severed safely.");
+  }
 }
 
