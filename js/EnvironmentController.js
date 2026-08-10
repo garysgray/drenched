@@ -38,12 +38,31 @@ class EnvironmentController
   }
 
   // Handle all weather intensity changes
-  changeIntensity(id) 
+  changeIntensity(id)
   {
-    if (this.visuals) this.visuals.setIntensity(id);
-    if (this.audio) this.audio.setLoopGain('rain', CONFIG.rainLevels[id], CONFIG.audio.rainGainFadeTime);
-    // Reset thunder scheduling
-    this._scheduleNextStrike(id);
+      if (!CONFIG.rainLevels || !(id in CONFIG.rainLevels))
+      {
+          console.warn(`EnvironmentController: Unknown rain intensity "${id}".`);
+          return;
+      }
+
+      this.currentIntensity = id;
+
+      if (this.visuals)
+      {
+          this.visuals.setIntensity(id);
+      }
+
+      if (this.audio)
+      {
+          this.audio.setLoopGain(
+              'rain',
+              CONFIG.rainLevels[id],
+              CONFIG.audio.rainGainFadeTime
+          );
+      }
+
+      this._scheduleNextStrike(id);
   }
 
   // Unified storm strike timeline
@@ -104,18 +123,28 @@ class EnvironmentController
   }
 
   // Thunder scheduling (moved from RainSounds)
-  _scheduleNextStrike(intensity) 
+  _scheduleNextStrike(intensity)
   {
-    clearTimeout(this.thunderTimer);
-    
-    const { min, range } = CONFIG.thunderDelay[intensity];
-    const delay = min + Math.random() * range;
-    
-    this.thunderTimer = setTimeout(() => 
-    {
-      this._executeStormStrike(intensity);
-      this._scheduleNextStrike(intensity); // Loop
-    }, delay);
+      clearTimeout(this.thunderTimer);
+
+      const delayConfig = CONFIG.thunderDelay[intensity];
+
+      if (!delayConfig)
+      {
+          console.warn(`EnvironmentController: No thunder delay configuration for "${intensity}".`);
+
+          this.thunderTimer = null;
+          return;
+      }
+
+      const { min, range } = delayConfig;
+      const delay = min + Math.random() * range;
+
+      this.thunderTimer = setTimeout(() =>
+      {
+          this._executeStormStrike(intensity);
+          this._scheduleNextStrike(intensity);
+      }, delay);
   }
 
   // ── COMPLETE LIFE CYCLE TEARDOWN ───────────────────────────

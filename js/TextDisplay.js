@@ -5,173 +5,260 @@
 // Description: Manages all text rendering and animation for the scene
 // Core Role:   Handles static and scrolling text modes with flash effects
 // Dependencies: CONFIG, UIComponent
+//
+// Design Notes:
+// - TextDisplay owns all text-specific behavior.
+// - UIManager communicates with TextDisplay only through the UIComponent contract.
+// - Shared listener cleanup is inherited from UIComponent.
+// - TextDisplay does not need to know anything about UIManager.
+// - EnvironmentController can directly call flashFont() for synchronized effects.
 
 class TextDisplay extends UIComponent
 {
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
   {
-    super();
-    
-    // Cache DOM references
-    this.stage = document.querySelector('.text-stage');
-    this.textWrap = document.querySelector('#text-toggle');
-    this.mainText = document.querySelector('.main-text');
-    this.shadowText = document.querySelector('.shadow-text');
-    
-    // State tracking
-    this.isScrolling = false;
-    this._fontFlashTimer = null;
-    this._customCallbacks = []; // Tracking list for custom parent hooks
+      super();
 
-    // Initialize text content from central config via textContent (100% Safe)
-    const textAsset = CONFIG.text.content;
-    if (this.mainText) this.mainText.textContent = textAsset;
-    if (this.shadowText) this.shadowText.textContent = textAsset;
+      // Cache DOM references
+      this.stage = document.querySelector('.text-stage');
+      this.textWrap = document.querySelector('#text-toggle');
+      this.mainText = document.querySelector('.main-text');
+      this.shadowText = document.querySelector('.shadow-text');
 
-    // ── SECURE SCROLLING TEXT SETUP ───────────────────────────
-    this.scrollEl = document.createElement('div');
-    this.scrollEl.id = 'dynamic-scroll-text';
-    this.scrollEl.className = 'scroll-left';
-    this.scrollEl.style.cursor = 'pointer';
-    
-    // Create inner text node safely without innerHTML overhead
-    this.scrollText = document.createElement('p');
-    this.scrollText.textContent = textAsset;
-    
-    this.scrollEl.appendChild(this.scrollText);
-    if (this.stage) this.stage.appendChild(this.scrollEl);
+      // State tracking
+      this.isScrolling = false;
+      this._fontFlashTimer = null;
 
-    // Set initial display state
-    if (this.stage) this.stage.classList.remove('scrolling');
-  }
+      // Initialize text content from central config via textContent.
+      // textContent keeps the operation safe because it treats the
+      // configured text as text rather than executable HTML.
+      const textAsset = CONFIG.text.content;
 
-  updateVisualState(actionType, value) 
-  {
-    switch(actionType) {
-      case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
-        this.toggleScrollMode();
-        break;
-      case CONFIG.UIActions.SET_TEXT_MODE:
-        this.forceSetMode(value);
-        break;
-      case CONFIG.UIActions.SET_SCROLL_SPEED:
-        this.updateAnimationSpeed(value);
-        break;
-    }
-  }
-
-  // Returns event mapping configuration
-  getEventMaps() 
-  {
-    return [
+      if (this.mainText)
       {
-        elementId: 'text-toggle',
-        eventType: 'click',
-        actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE
-      },
-      {
-        elementId: 'dynamic-scroll-text', 
-        eventType: 'click',
-        actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE
-      },
-      {
-        elementId: 'text-mode-static',
-        eventType: 'click',
-        actionType: CONFIG.UIActions.SET_TEXT_MODE,
-        actionValue: false
-      },
-      {
-        elementId: 'text-mode-scroll',
-        eventType: 'click',
-        actionType: CONFIG.UIActions.SET_TEXT_MODE,
-        actionValue: true
+          this.mainText.textContent = textAsset;
       }
-    ];
+
+      if (this.shadowText)
+      {
+          this.shadowText.textContent = textAsset;
+      }
+
+      // ── SECURE SCROLLING TEXT SETUP ────────────────────────
+      // Create the scrolling text container dynamically.
+      this.scrollEl = document.createElement('div');
+      this.scrollEl.id = 'dynamic-scroll-text';
+      this.scrollEl.className = 'scroll-left';
+      this.scrollEl.style.cursor = 'pointer';
+
+      // Create inner text node safely without innerHTML.
+      this.scrollText = document.createElement('p');
+      this.scrollText.textContent = textAsset;
+
+      this.scrollEl.appendChild(this.scrollText);
+
+      if (this.stage)
+      {
+          this.stage.appendChild(this.scrollEl);
+
+          // Set initial display state
+          this.stage.classList.remove('scrolling');
+      }
   }
 
-  // Synchronized Timeline Entrypoint: Executed exclusively by EnvironmentController.
-  flashFont({ crack, attackSecs, decaySecs })
+  // ── VISUAL STATE ROUTER ───────────────────────────────────
+  // Receives unified state broadcasts from UIManager.
+  //
+  // TextDisplay only reacts to actions that belong to text behavior.
+  // Other actions are intentionally ignored.
+  updateVisualState(actionType, value)
   {
-    // Clear any existing flash timer to prevent animations from stepping on each other
-    clearTimeout(this._fontFlashTimer);
+      switch(actionType)
+      {
+          case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
+              this.toggleScrollMode();
+              break;
 
-    const targets = [this.mainText, this.shadowText, this.scrollText];
+          case CONFIG.UIActions.SET_TEXT_MODE:
+              this.forceSetMode(value);
+              break;
 
-    // Trigger the flash by applying a data attribute and setting custom CSS variables
+          case CONFIG.UIActions.SET_SCROLL_SPEED:
+              this.updateAnimationSpeed(value);
+              break;
+      }
+  }
+
+  // ── EVENT MAP CONFIGURATION ───────────────────────────────
+  // Describes which DOM controls generate text-related actions.
+  //
+  // UIManager reads this configuration and connects the controls
+  // to the centralized action-routing system.
+  getEventMaps()
+  {
+      return [
+          {
+              elementId: 'text-toggle',
+              eventType: 'click',
+              actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE
+          },
+          {
+              elementId: 'dynamic-scroll-text',
+              eventType: 'click',
+              actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE
+          },
+          {
+              elementId: 'text-mode-static',
+              eventType: 'click',
+              actionType: CONFIG.UIActions.SET_TEXT_MODE,
+              actionValue: false
+          },
+          {
+              elementId: 'text-mode-scroll',
+              eventType: 'click',
+              actionType: CONFIG.UIActions.SET_TEXT_MODE,
+              actionValue: true
+          }
+      ];
+  }
+
+  // ── FONT FLASH EFFECT ──────────────────────────────────────
+  // Synchronized timeline entrypoint executed by EnvironmentController.
+  //
+  // The timing values are supplied by the environment system so
+  // TextDisplay does not need to know how the weather timing works.
+  flashFont({ crack, attackSecs, decaySecs })
+{
+console.log('[TEXT] flashFont FIRED', {
+crack,
+attackSecs,
+decaySecs,
+mainText: !!this.mainText,
+shadowText: !!this.shadowText,
+scrollText: !!this.scrollText
+});
+
+
+// Clear any previous flash timer so overlapping strikes
+// cannot leave an old timer controlling the current flash.
+clearTimeout(this._fontFlashTimer);
+
+const targets = [
+    this.mainText,
+    this.shadowText,
+    this.scrollText
+];
+
+// Keep the font flash active for the same duration
+// used by RainVisuals.flashLightning().
+const holdTimeSecs = attackSecs + 0.05;
+
+// Configure and activate all text targets together.
+for (const el of targets)
+{
+    if (!el)
+    {
+        continue;
+    }
+
+    el.style.setProperty('--flash-attack', `${attackSecs}s`);
+    el.style.setProperty('--flash-decay', `${decaySecs}s`);
+
+    el.dataset.flash = "active";
+
+    console.log('[TEXT] Activating flash:', el);
+}
+
+// Deactivate the font at the same time as the lightning layer.
+this._fontFlashTimer = setTimeout(() =>
+{
     for (const el of targets)
     {
-      if (!el) continue;
-      
-      // Pass dynamic timing configuration straight into CSS variables
-      el.style.setProperty('--flash-attack', `${attackSecs}s`);
-      el.style.setProperty('--flash-decay', `${decaySecs}s`);
-      
-      // Turn the flash on
-      el.dataset.flash = "active";
-    }
+        if (!el)
+        {
+            continue;
+        }
 
-    // Set timer to cleanly turn the flash state off after the attack phase completes
-    this._fontFlashTimer = setTimeout(() =>
-    {
-      for (const el of targets)
-      {
-        if (!el) continue;
         el.dataset.flash = "inactive";
+    }
+
+    console.log('[TEXT] Flash deactivated');
+}, holdTimeSecs * 1000);
+
+
+}
+
+
+  // ── SCROLL CLICK CONNECTOR ────────────────────────────────
+  // Allows another system to attach a callback to the dynamically
+  // created scrolling text element.
+  //
+  // UIComponent now owns the listener tracking, so TextDisplay
+  // does not need its own _customCallbacks array.
+  bindScrollElementClick(callbackFunction)
+  {
+      if (this.scrollEl && typeof callbackFunction === 'function')
+      {
+          this.addListener(
+              this.scrollEl,
+              'click',
+              callbackFunction
+          );
       }
-    }, attackSecs * 1000);
   }
 
-  // SECURE LIFECYCLE CONNECTOR
-  bindScrollElementClick(callbackFunction) 
+  // ── SCROLL MODE TOGGLE ────────────────────────────────────
+  // Flips the active scrolling state back and forth.
+  toggleScrollMode()
   {
-    if (this.scrollEl) {
-      this.scrollEl.addEventListener('click', callbackFunction);
-      // Track custom hooks so destroy can rip them down later
-      this._customCallbacks.push({ element: this.scrollEl, fn: callbackFunction });
-    }
+      this.forceSetMode(!this.isScrolling);
   }
 
-  // Flips the active scrolling state back and forth cleanly.
-  toggleScrollMode() 
+  // ── SCROLL MODE SETTER ────────────────────────────────────
+  // Forcefully switches the layout to a specific mode.
+  forceSetMode(scrolling)
   {
-    this.forceSetMode(!this.isScrolling);
+      this.isScrolling = Boolean(scrolling);
+
+      if (this.stage)
+      {
+          this.stage.classList.toggle(
+              'scrolling',
+              this.isScrolling
+          );
+      }
   }
 
-  // Forcefully switches the layout to a specific layout mode state.
-  forceSetMode(scrolling) 
+  // ── SCROLL SPEED ──────────────────────────────────────────
+  // Adjusts the CSS marquee scroll timeline duration whenever
+  // the UI slider changes.
+  updateAnimationSpeed(seconds)
   {
-    this.isScrolling = scrolling;
-    if (this.stage) {
-      this.stage.classList.toggle('scrolling', scrolling); 
-    }
+      if (this.scrollText)
+      {
+          this.scrollText.style.animationDuration = `${seconds}s`;
+      }
   }
 
-  // Adjusts the CSS marquee scroll timeline duration whenever the UI slider shifts.
-  updateAnimationSpeed(seconds) 
-  {
-    if (this.scrollText) {
-      this.scrollText.style.animationDuration = `${seconds}s`;
-    }
-  }
-
-  // ── COMPLETE LIFE CYCLE TEARDOWN ───────────────────────────
+  // ── COMPLETE LIFE CYCLE TEARDOWN ──────────────────────────
   destroy()
   {
-    // 1. Instantly kill pending background timer clocks
-    clearTimeout(this._fontFlashTimer);
+      // Kill any pending font flash timer.
+      clearTimeout(this._fontFlashTimer);
+      this._fontFlashTimer = null;
 
-    // 2. Unbind dynamic callback ropes attached by the parent execution files
-    this._customCallbacks.forEach(({ element, fn }) => {
-      if (element) element.removeEventListener('click', fn);
-    });
-    this._customCallbacks = [];
+      // Remove listeners registered through UIComponent.addListener().
+      super.destroy();
 
-    // 3. Formally strip out the dynamically appended wrapper node from the DOM canvas tree
-    if (this.scrollEl && this.scrollEl.parentNode) {
-      this.scrollEl.parentNode.removeChild(this.scrollEl);
-    }
+      // Remove the dynamically created scrolling element from the DOM.
+      if (this.scrollEl && this.scrollEl.parentNode)
+      {
+          this.scrollEl.parentNode.removeChild(this.scrollEl);
+      }
 
-    console.log("TextDisplay: Active animation loops and dynamic callbacks destroyed safely.");
+      console.log("TextDisplay: Active animations, listeners, and dynamic elements destroyed safely.");
   }
+
 }
+

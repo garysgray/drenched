@@ -8,10 +8,10 @@
 //
 // Design Notes:
 // - Engine owns system creation and startup configuration.
-// - Engine supplies UIManager with configuration from CONFIG.
+// - Engine supplies configuration to the subsystem that owns the behavior.
 // - Engine builds the initial UI state payload.
 // - UIManager remains responsible for UI event routing and component broadcasting.
-// ──────────────────────────────────────────────────────────────
+// - HUD owns its own auto-hide behavior.
 
 class Engine
 {
@@ -20,27 +20,40 @@ class Engine
     {
         // Instantiate all core execution and visual layers on boot
         const textDisplayInstance = new TextDisplay();
-        const HUDInstance = new HUD();
 
-        this.audio       = new AudioManager(CONFIG.masterVolume);
-        this.visuals     = new RainVisuals();
+        // HUD receives its own configuration because HUD owns
+        // its auto-hide behavior and presentation lifecycle.
+        const HUDInstance = new HUD(CONFIG.hud);
 
-        this.environment = new EnvironmentController( this.audio,this.visuals,textDisplayInstance);
+        this.audio = new AudioManager(CONFIG.masterVolume);
+        this.visuals = new RainVisuals();
 
-        // Pass HUD configuration directly from CONFIG.
-        // UIManager consumes these settings but does not define them.
-        this.ui = new UIManager( this.audio, this.visuals, this.environment,CONFIG.hud );
+        this.environment = new EnvironmentController(
+            this.audio,
+            this.visuals,
+            textDisplayInstance
+        );
+
+        // UIManager only needs the systems it mediates.
+        // It no longer needs to know anything about HUD auto-hide.
+        this.ui = new UIManager(
+            this.audio,
+            this.visuals,
+            this.environment
+        );
 
         // ── UI COMPONENT REGISTRATION ─────────────────────────
         this.ui.registerComponent('primary_hud', HUDInstance);
-
-        this.ui.registerComponent( 'text_display', textDisplayInstance);
+        this.ui.registerComponent('text_display', textDisplayInstance);
 
         // Handle browser audio autoplay restrictions
-        document.addEventListener( 'click', () => this.audio.resume(), { once: true } );
+        document.addEventListener('click', () => this.audio.resume(), { once: true });
 
-        // Start with default weather intensity and color theme red
-        this.start( CONFIG.intensitiesModes.RAIN, Object.keys(CONFIG.colors)[0]);
+        // Start with default weather intensity and first configured color theme
+        this.start(
+            CONFIG.intensitiesModes.RAIN,
+            Object.keys(CONFIG.colors)[0]
+        );
     }
 
     // ── SYSTEM STARTUP ────────────────────────────────────────
@@ -55,25 +68,36 @@ class Engine
         // Build the initial UI state as data rather than passing
         // individual settings directly into UIManager.
         //
-        // Engine owns the startup configuration because Engine
-        // is responsible for coordinating system initialization.
-        const initialStates = 
-        [
-            { actionType: CONFIG.UIActions.SET_RAIN_INTENSITY, value: intensityId },
-            { actionType: CONFIG.UIActions.SET_COLOR,  value: colorId },
-            { actionType: CONFIG.UIActions.SET_SCROLL_SPEED, value: CONFIG.scroll.defaultSpeedSecs },
-            { actionType: CONFIG.UIActions.SET_MASTER_VOLUME, value: Math.round(CONFIG.masterVolume * 100)}
+        // Engine owns startup configuration because Engine
+        // coordinates initialization of all systems.
+        const initialStates = [
+            {
+                actionType: CONFIG.UIActions.SET_RAIN_INTENSITY,
+                value: intensityId
+            },
+            {
+                actionType: CONFIG.UIActions.SET_COLOR,
+                value: colorId
+            },
+            {
+                actionType: CONFIG.UIActions.SET_SCROLL_SPEED,
+                value: CONFIG.scroll.defaultSpeedSecs
+            },
+            {
+                actionType: CONFIG.UIActions.SET_MASTER_VOLUME,
+                value: Math.round(CONFIG.masterVolume * 100)
+            }
         ];
 
         // Send the complete initial state to UIManager.
-        // UIManager simply distributes it to registered components.
+        // UIManager distributes it to registered components.
         this.ui.initLayoutStates(initialStates);
     }
 
     // ── MASTER CLEANUP LIFECYCLE ───────────────────────────────
     shutdown()
     {
-        console.log('Engine: Commencing complete system teardown...');
+        console.log("Engine: Commencing complete system teardown...");
 
         // Clear out registered UI Components (TextDisplay, HUD, etc.)
         if (this.ui && this.ui.components)
@@ -87,12 +111,13 @@ class Engine
             });
         }
 
-        // Clear out core engine infrastructure layers explicitly
+        // Clear out UIManager event infrastructure
         if (this.ui && typeof this.ui.destroy === 'function')
         {
             this.ui.destroy();
         }
 
+        // Clear out core engine infrastructure layers
         if (this.audio && typeof this.audio.stopAll === 'function')
         {
             this.audio.stopAll();
@@ -109,12 +134,13 @@ class Engine
         }
 
         // Sever all remaining object ties for the Garbage Collector
-        this.audio       = null;
-        this.visuals     = null;
+        this.audio = null;
+        this.visuals = null;
         this.environment = null;
-        this.ui          = null;
+        this.ui = null;
 
-        console.log('Engine: Teardown complete. All memory links severed safely.');
+        console.log("Engine: Teardown complete. All memory links severed safely.");
     }
 
 }
+

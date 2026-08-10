@@ -134,7 +134,6 @@ class RainVisuals
     });
   }
 
-
   flashLightning({ crack, attackSecs, decaySecs })
   {
     clearTimeout(this._flashTimer);
@@ -161,5 +160,4 @@ class RainVisuals
     }, holdTimeSecs * 1000);
   }
 
-  
 }
