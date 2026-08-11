@@ -77,60 +77,34 @@
     }
 }
 
+/* ── RESPONSIVE RAIN SIZE TEST ─────────────────────────────── */
 
-/* ──────────────────────────────────────────────────────────────
-   RESPONSIVE RAIN SCALE AND SPEED
-   ────────────────────────────────────────────────────────────── */
-
-
-/* ── MEDIUM VIEWPORTS ───────────────────────────────────────── */
-
-@media (max-width: 1024px) {
-
-    :root {
-        --rain-scale: 0.75;
+/* Medium screens */
+@media (max-width: 1024px)
+{
+    #rain-angled,
+    #rain-rev
+    {
+        background-size: calc(var(--rain-angled-size) * 0.85) auto;
     }
 
-    #rain-straight {
-        background-size: calc(var(--rain-straight-size) * 0.75) auto;
-    }
-
-    #rain-angled {
-        animation-duration: calc(var(--dur-angled) * 1.3);
-    }
-
-    #rain-straight {
-        animation-duration: calc(var(--dur-straight) * 1.3);
-    }
-
-    #rain-rev {
-        animation-duration: calc(var(--dur-rev) * 1.3);
+    #rain-straight
+    {
+        background-size: calc(var(--rain-straight-size) * 0.85) auto;
     }
 }
 
-
-/* ── SMALL VIEWPORTS ────────────────────────────────────────── */
-
-@media (max-width: 600px) {
-
-    :root {
-        --rain-scale: 0.5;
+/* Small screens */
+@media (max-width: 600px)
+{
+    #rain-angled,
+    #rain-rev
+    {
+        background-size: calc(var(--rain-angled-size) * 0.70) auto;
     }
 
-    #rain-straight {
-        background-size: calc(var(--rain-straight-size) * 0.5) auto;
-    }
-
-    #rain-angled {
-        animation-duration: calc(var(--dur-angled) * 1.8);
-    }
-
-    #rain-straight {
-        animation-duration: calc(var(--dur-straight) * 1.8);
-    }
-
-    #rain-rev {
-        animation-duration: calc(var(--dur-rev) * 1.8);
+    #rain-straight
+    {
+        background-size: calc(var(--rain-straight-size) * 0.70) auto;
     }
 }
-
