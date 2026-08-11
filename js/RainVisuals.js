@@ -14,7 +14,6 @@ class RainVisuals
     // Cache root element for CSS variable access
     this.root = document.documentElement;
 
-    
     // Reference visual layer elements
     this.rainAngled   = document.getElementById('rain-angled');
     this.rainStraight = document.getElementById('rain-straight');
@@ -103,22 +102,28 @@ class RainVisuals
   }
 
   setIntensity(id)
-  {
+{
     const s = CONFIG.intensities[id];
 
-    requestAnimationFrame(() => 
+    requestAnimationFrame(() =>
     {
-      if (this.rainAngled) this.rainAngled.style.animationDuration = s.durAngled;
-      if (this.rainStraight) this.rainStraight.style.animationDuration = s.durStraight;
-      if (this.rainRev) this.rainRev.style.animationDuration = s.durRev;
+        // ── Rain animation durations ─────────────────────────
+        // Store the configured duration for each individual layer.
+        // CSS media queries can then apply viewport-specific
+        // multipliers without destroying the differences between
+        // angled, straight, and reverse rain.
 
-      if (this.root) {
-        this.root.style.setProperty('--op-angled',   s.opAngled);
+        this.root.style.setProperty('--dur-angled', s.durAngled);
+        this.root.style.setProperty('--dur-straight', s.durStraight);
+        this.root.style.setProperty('--dur-rev', s.durRev);
+
+        // ── Rain opacity ─────────────────────────────────────
+        this.root.style.setProperty('--op-angled', s.opAngled);
         this.root.style.setProperty('--op-straight', s.opStraight);
-        this.root.style.setProperty('--op-rev',      s.opRev);
-      }
+        this.root.style.setProperty('--op-rev', s.opRev);
     });
-  }
+}
+
 
   // BATCHED OPTIMIZATION: Updates text color variable parameters smoothly
   setColor(id)

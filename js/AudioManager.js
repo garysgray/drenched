@@ -47,12 +47,6 @@ class AudioManager
     this._initNodePools();
   }
 
-  /**
-   * Unified sound playback interface
-   * @param {string} assetKey - Key from SoundRecipes
-   * @param {object} params - Recipe-specific parameters
-   * @param {number|null} customStartTime - Optional AudioContext timestamp
-   */
   play(assetKey, params = {}, customStartTime = null) 
   {
     // Look up the specific "cooking recipe" for this sound (e.g., 'ui_click' or 'raindrop')
@@ -76,7 +70,8 @@ class AudioManager
     if (filterConfigs) 
     {
       // Force filters into a list format and calculate their frequency, resonance (Q), and volume adjustments
-      filterConfigs = (Array.isArray(filterConfigs) ? filterConfigs : [filterConfigs]).map(f => ({
+      filterConfigs = (Array.isArray(filterConfigs) ? filterConfigs : [filterConfigs]).map(f => (
+      {
         type: f.type,
         frequency: resolveValue(f.frequency, params),
         Q: resolveValue(f.Q, params),

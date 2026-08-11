@@ -108,20 +108,7 @@ const _configData =
     [RAIN_INTENSITY_MODES.TORRENT]: 0.5 
   }),
 
-  // thunderDelay: Object.freeze(
-  // {
-  //   [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ min: 15000, range: 15000 }),
-  //   [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ min: 8000,  range: 8000 }),
-  //   [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ min: 3000,  range: 4000 }),
-  // }),
-
-  // thunderCfg: Object.freeze(
-  // {
-  //   [RAIN_INTENSITY_MODES.RAIN]:    Object.freeze({ crack: 0.3,  rumble: 0.25,  rumbleLen: 2.5, fadeMin: 2.0, fadeMax: 1.0 }),
-  //   [RAIN_INTENSITY_MODES.STORM]:   Object.freeze({ crack: 0.8,  rumble: 0.65,  rumbleLen: 3.5, fadeMin: 3.0, fadeMax: 1.5 }),
-  //   [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({ crack: 1.4,  rumble: 1.05,  rumbleLen: 5.0, fadeMin: 4.5, fadeMax: 2.0 }),
-  // }),
-  // ── THUNDER / LIGHTNING STRIKE CONFIGURATION ───────────────
+// ── THUNDER / LIGHTNING STRIKE CONFIGURATION ───────────────
 //
 // Every thunder event is treated as ONE complete strike.
 //

@@ -65,11 +65,7 @@ class UIComponent
 
       element.addEventListener(eventType, handler);
 
-      this._listeners.push({
-          element,
-          eventType,
-          handler
-      });
+      this._listeners.push({ element, eventType, handler });
   }
 
   // ── COMMON EVENT CLEANUP ───────────────────────────────────

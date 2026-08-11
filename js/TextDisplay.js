@@ -69,9 +69,7 @@ class TextDisplay extends UIComponent
 
   // ── VISUAL STATE ROUTER ───────────────────────────────────
   // Receives unified state broadcasts from UIManager.
-  //
-  // TextDisplay only reacts to actions that belong to text behavior.
-  // Other actions are intentionally ignored.
+  // TextDisplay only reacts to actions that belong to text behavior. Other actions are intentionally ignored.
   updateVisualState(actionType, value)
   {
       switch(actionType)
@@ -92,9 +90,8 @@ class TextDisplay extends UIComponent
 
   // ── EVENT MAP CONFIGURATION ───────────────────────────────
   // Describes which DOM controls generate text-related actions.
-  //
-  // UIManager reads this configuration and connects the controls
-  // to the centralized action-routing system.
+
+  // UIManager reads this configuration and connects the controls to the centralized action-routing system.
   getEventMaps()
   {
       return [
@@ -125,9 +122,8 @@ class TextDisplay extends UIComponent
 
   // ── FONT FLASH EFFECT ──────────────────────────────────────
   // Synchronized timeline entrypoint executed by EnvironmentController.
-  //
-  // The timing values are supplied by the environment system so
-  // TextDisplay does not need to know how the weather timing works.
+
+  // The timing values are supplied by the environment system so TextDisplay does not need to know how the weather timing works.
   flashFont({ attackSecs, decaySecs })
   {
       clearTimeout(this._fontFlashTimer);
@@ -139,13 +135,7 @@ class TextDisplay extends UIComponent
           this.scrollText
       ];
 
-      console.log(
-          '[TEXT] FONT FLASH',
-          {
-              attack: attackSecs,
-              decay: decaySecs,
-              targets: targets.filter(Boolean).length
-          }
+      console.log('[TEXT] FONT FLASH', { attack: attackSecs, decay: decaySecs, targets: targets.filter(Boolean).length }
       );
 
       // Apply the exact same timing used by the lightning strike.
@@ -156,15 +146,9 @@ class TextDisplay extends UIComponent
               continue;
           }
 
-          el.style.setProperty(
-              '--flash-attack',
-              `${attackSecs}s`
-          );
+          el.style.setProperty('--flash-attack', `${attackSecs}s`);
 
-          el.style.setProperty(
-              '--flash-decay',
-              `${decaySecs}s`
-          );
+          el.style.setProperty('--flash-decay',`${decaySecs}s`);
 
           // Trigger the font flash.
           el.dataset.flash = 'active';
@@ -190,19 +174,14 @@ class TextDisplay extends UIComponent
   }
 
   // ── SCROLL CLICK CONNECTOR ────────────────────────────────
-  // Allows another system to attach a callback to the dynamically
-  // created scrolling text element.
-  //
-  // UIComponent now owns the listener tracking, so TextDisplay
-  // does not need its own _customCallbacks array.
+  // Allows another system to attach a callback to the dynamically created scrolling text element.
+
+  // UIComponent now owns the listener tracking, so TextDisplay does not need its own _customCallbacks array.
   bindScrollElementClick(callbackFunction)
   {
       if (this.scrollEl && typeof callbackFunction === 'function')
       {
-          this.addListener(
-              this.scrollEl,
-              'click',
-              callbackFunction
+          this.addListener(this.scrollEl, 'click', callbackFunction
           );
       }
   }
@@ -222,16 +201,12 @@ class TextDisplay extends UIComponent
 
       if (this.stage)
       {
-          this.stage.classList.toggle(
-              'scrolling',
-              this.isScrolling
-          );
+          this.stage.classList.toggle('scrolling' ,this.isScrolling);
       }
   }
 
   // ── SCROLL SPEED ──────────────────────────────────────────
-  // Adjusts the CSS marquee scroll timeline duration whenever
-  // the UI slider changes.
+  // Adjusts the CSS marquee scroll timeline duration whenever the UI slider changes.
   updateAnimationSpeed(seconds)
   {
       if (this.scrollText)
