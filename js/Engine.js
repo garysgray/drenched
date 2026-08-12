@@ -13,16 +13,18 @@
 // // - UIManager remains responsible for UI event routing and component broadcasting.
 // // - HUD owns its own auto-hide behavior.
 
+const MULTIPLYER = 100;
+
 class Engine
 {
     // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor()
     {
-        // 1. FIRST: Run the settings loader function to bind all properties directly to 'this'
+        // Run the settings loader function to bind all properties directly to 'this'
         this._loadSettingsFromStorage();
 
-        // 2. SECOND: Now instantiate your core layers cleanly using your class properties
-        this.audio = new AudioManager(this.currentVolume / 100);
+        // Now instantiate your core layers cleanly using your class properties
+        this.audio = new AudioManager(this.currentVolume / MULTIPLYER);
         this.textDisplayInstance = new TextDisplay();
         this.hud = new HUD(CONFIG.hud);
         this.visuals = new RainVisuals();
@@ -40,10 +42,10 @@ class Engine
         this.start(this.activeMode, this.activeTheme, this.currentMute, this.currentScrollMode, this.currentTextMode, this.currentVolume, this.currentScrollSpeed);
     }
 
-    // ── NEW FUNCTION: SEPARATE STORAGE LOADER ───────────────────
+    // SEPARATE STORAGE LOADER ───────────────────
     _loadSettingsFromStorage()
     {
-        this.activeTheme       = StorageUtil.get('colorTheme', Object.keys(CONFIG.colors)); 
+        this.activeTheme       = StorageUtil.get('colorTheme', Object.keys(CONFIG.colors)[0]); 
         this.activeMode        = StorageUtil.get('rainIntensity', CONFIG.intensitiesModes.RAIN);   
         this.currentMute        = StorageUtil.get('muteMode', false);                        
         this.currentScrollMode  = StorageUtil.get('scrollMode', false); 
@@ -52,7 +54,6 @@ class Engine
         this.currentScrollSpeed = StorageUtil.get('scrollSpeed', CONFIG.scroll.defaultSpeedSecs);
     }
     
-    // ── CORE UPDATE TICK ───────────────────────────────────────
     // Called by Main's gameLoop with the FIXED_TIMESTEP delta time
     update(dt)
     {
@@ -61,24 +62,31 @@ class Engine
         if (this.visuals && typeof this.visuals.update === 'function') this.visuals.update(dt);
         if (this.hud && typeof this.hud.update === 'function') this.hud.update(dt);
     }
+
     // ── INITIAL SYSTEM START ───────────────────────────────────
-        start(intensityId, colorThemeId, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed)
+    start(intensityId, colorThemeId, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed)
     {
         if (this.environment) this.environment.changeIntensity(intensityId);
         if (this.visuals && typeof this.visuals.setColor === 'function') this.visuals.setColor(colorThemeId);
 
         if (this.audio)
         {
-            if (typeof this.audio.setMute === 'function') {
+            if (typeof this.audio.setMute === 'function') 
+            {
                 this.audio.setMute(currentMute);
-            } else {
+            } 
+            else 
+            {
                 this.audio.isMuted = currentMute; 
             }
 
-            if (typeof this.audio.setMasterVolume === 'function') {
-                this.audio.setMasterVolume(currentVolume / 100);
-            } else {
-                this.audio.masterVolume = currentVolume / 100;
+            if (typeof this.audio.setMasterVolume === 'function') 
+            {
+                this.audio.setMasterVolume(currentVolume / MULTIPLYER);
+            } 
+            else 
+            {
+                this.audio.masterVolume = currentVolume / MULTIPLYER;
             }
         }
 

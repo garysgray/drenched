@@ -16,7 +16,6 @@ class AudioManager
     
     // Volume state tracking
     this.muted = false;
-    this._preMuteVolume = initialVolume;
     this._masterVolume = initialVolume;
 
     // ── SAFARI/iOS AUTO-WAKE TRIGGER GUARD ────────────────────
@@ -153,7 +152,8 @@ class AudioManager
 
     // ── THE ONLY PERFORMANCE FIX REQUIRED ──
     // When the noise buffer naturally finishes playing, reclaim this pool node safely
-    source.onended = () => {
+    source.onended = () => 
+    {
       channel.inUse = false;
       channel.source = null;
     };

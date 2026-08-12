@@ -32,45 +32,41 @@ class TextDisplay extends UIComponent
         this.isFlashing = false;
         this.activeTargets = [];
 
-        // Initialize text content from central config via textContent.
-        // textContent keeps the operation safe because it treats the
-        // configured text as text rather than executable HTML.
+        // Initialize text content from central config via textContent. textContent keeps the operation safe 
+        // because it treats the configured text as text rather than executable HTML.
         const textAsset = CONFIG.text.content;
 
         if (this.mainText)
         {
-        this.mainText.textContent = textAsset;
+            this.mainText.textContent = textAsset;
         }
 
         if (this.shadowText)
         {
-        this.shadowText.textContent = textAsset;
+            this.shadowText.textContent = textAsset;
         }
 
-        // ── SECURE SCROLLING TEXT SETUP ────────────────────────
-        // Create the scrolling text container dynamically.
-        this.scrollEl = document.createElement('div');
-        this.scrollEl.id = 'dynamic-scroll-text';
-        this.scrollEl.className = 'scroll-left';
-        this.scrollEl.style.cursor = 'pointer';
-
-        // Create inner text node safely without innerHTML.
-        this.scrollText = document.createElement('p');
-        this.scrollText.textContent = textAsset;
-
-        this.scrollEl.appendChild(this.scrollText);
-
-        if (this.stage)
+        // Create the outer scrolling div container using our utility
+        this.scrollEl = this.createAndAppendElement('.text-stage', 'div', 
         {
-        this.stage.appendChild(this.scrollEl);
+            id: 'dynamic-scroll-text',
+            className: 'scroll-left',
+            style: 'cursor: pointer;'
+        });
+
+        // Create inner paragraph element inside the container safely
+        if (this.scrollEl)
+        {
+            this.scrollText = this.createAndAppendElement('#dynamic-scroll-text', 'p', {}, textAsset);
+        }
 
         // Set initial display state
-        this.stage.classList.remove('scrolling');
+        if (this.stage)
+        {
+            this.stage.classList.remove('scrolling');
         }
     }
 
-    // ── VISUAL STATE ROUTER ───────────────────────────────────
-    // Receives unified state broadcasts from UIManager.
     // TextDisplay only reacts to actions that belong to text behavior. Other actions are intentionally ignored.
     updateVisualState(actionType, value)
     {
@@ -89,9 +85,6 @@ class TextDisplay extends UIComponent
             break;
         }
     }
-
-    // ── EVENT MAP CONFIGURATION ───────────────────────────────
-    // Describes which DOM controls generate text-related actions.
 
     // UIManager reads this configuration and connects the controls to the centralized action-routing system.
     getEventMaps()
@@ -124,7 +117,6 @@ class TextDisplay extends UIComponent
 
     // ── FONT FLASH EFFECT ──────────────────────────────────────
     // Synchronized timeline entrypoint executed by EnvironmentController.
-
     // The timing values are supplied by the environment system so TextDisplay does not need to know how the weather timing works.
     flashFont({ attackSecs, decaySecs }, deltaOvershoot = 0)
     {
@@ -186,8 +178,6 @@ class TextDisplay extends UIComponent
 
     // ── SCROLL CLICK CONNECTOR ────────────────────────────────
     // Allows another system to attach a callback to the dynamically created scrolling text element.
-
-    // UIComponent now owns the listener tracking, so TextDisplay does not need its own _customCallbacks array.
     bindScrollElementClick(callbackFunction)
     {
         if (this.scrollEl && typeof callbackFunction === 'function')
@@ -196,7 +186,6 @@ class TextDisplay extends UIComponent
         }
     }
 
-    // ── SCROLL MODE TOGGLE ────────────────────────────────────
     // Flips the active scrolling state back and forth.
     toggleScrollMode()
     {
@@ -214,6 +203,26 @@ class TextDisplay extends UIComponent
             this.stage.classList.toggle('scrolling' ,this.isScrolling);
         }
     }
+
+    createAndAppendElement(parentSelector, tagName, attrs, text) 
+    {
+    var parent = document.querySelector(parentSelector);
+    if (!parent) {
+        console.warn('DOMUtil: Parent not found for selector:', parentSelector);
+        return null;
+    }
+    var el = document.createElement(tagName);
+    if (attrs) {
+        for (var key in attrs) {
+            if (attrs.hasOwnProperty(key)) {
+                el[key] = attrs[key];
+            }
+        }
+    }
+    if (text) el.textContent = text;
+    parent.appendChild(el);
+    return el;
+}
 
     // ── SCROLL SPEED ──────────────────────────────────────────
     // Adjusts the CSS marquee scroll timeline duration whenever the UI slider changes.
@@ -243,6 +252,5 @@ class TextDisplay extends UIComponent
 
         console.log("TextDisplay: Active animations, listeners, and dynamic elements destroyed safely.");
     }
-
 }
 

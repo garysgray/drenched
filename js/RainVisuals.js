@@ -61,20 +61,12 @@ class RainVisuals
   }
 
   // ── FILM GRAIN RENDERING ───────────────────────────────────────
-  _initGrain()
+  _initGrain() 
   {
-    // Generate exactly one crisp 128x128 noise pattern tile canvas
-    const tileCanvas = this._createTexture(CONFIG.grain.alpha);
-    
-    // Convert that canvas directly into a compressed data URL string
-    const grainDataUrl = tileCanvas.toDataURL();
-    
-    // Inject that data URL directly into an empty layout div overlay element
-    const noiseOverlay = document.getElementById('noise');
-    if (noiseOverlay) 
-    {
-      noiseOverlay.style.backgroundImage = `url(${grainDataUrl})`;
-    }
+    var tileCanvas = this.createNoiseTexture(128, 128, CONFIG.grain.alpha);
+    var grainDataUrl = tileCanvas.toDataURL();
+    var noiseOverlay = document.getElementById('noise');
+    if (noiseOverlay) noiseOverlay.style.backgroundImage = 'url(' + grainDataUrl + ')';
   }
 
   destroy()
@@ -122,6 +114,24 @@ class RainVisuals
         this.root.style.setProperty('--glow-color', c.glow);
       }
     });
+  }
+
+  createNoiseTexture(width, height, alpha) 
+  {
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var ctx = canvas.getContext('2d');
+    var imageData = ctx.createImageData(width, height);
+    var data = imageData.data;
+    for (var i = 0; i < data.length; i += 4) 
+    {
+        var v = Math.random() * 255;
+        data[i] = data[i + 1] = data[i + 2] = v;
+        data[i + 3] = alpha;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    return canvas;
   }
 
   flashLightning({ lightningPeak, attackSecs, decaySecs }, deltaOvershoot = 0)
@@ -175,5 +185,4 @@ class RainVisuals
           this.flashTimeRemaining = 0;
       }
   }
-
 }

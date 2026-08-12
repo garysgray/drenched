@@ -170,13 +170,6 @@ class UIManager
 
     // ── INITIAL UI STATE ───────────────────────────────────────
     // Receives a data-driven list of initial states from Engine.
-    //
-    // Example:
-    // [
-    //     { actionType: CONFIG.UIActions.SET_COLOR, value: 'red' },
-    //     { actionType: CONFIG.UIActions.SET_MASTER_VOLUME, value: 75 }
-    // ]
-    //
     // UIManager does not need to know how many settings exist.
     // Engine simply supplies the initial state payload.
     initLayoutStates(initialStates)
@@ -195,7 +188,7 @@ class UIManager
         });
     }
 
-        // ── NEW UTILITY: SAVE TO LOCALSTORAGE ──────────────────────
+    // SAVE TO LOCALSTORAGE ──────────────────────
     _saveSetting(key, value)
     {
         try 
@@ -214,7 +207,6 @@ class UIManager
         }
     }
 
-
     // ── CLEANUP ────────────────────────────────────────────────
     // Cleans up the UI controller to prevent lingering event listeners.
     destroy()
@@ -232,6 +224,5 @@ class UIManager
 
         console.log("UIManager: Event listeners scrubbed cleanly.");
     }
-
 }
 
