@@ -6,192 +6,6 @@
 // // Core Role:   Synchronizes audio, visuals and text during weather changes
 // // Dependencies: CONFIG, AudioManager, RainVisuals, TextDisplay
 
-// class EnvironmentController 
-// {
-//   // ── CONSTRUCTOR ────────────────────────────────────────────
-//   constructor(audio, visuals, text) 
-//   {
-//     // Reference core systems
-//     this.audio = audio;
-//     this.visuals = visuals;
-//     this.text = text;
-    
-//     // Thunder scheduling state
-//     this.thunderTimer = null;
-    
-//     // Initialize persistent weather effects
-//     this._initRainLoop();
-//   }
-
-//   // Initialize the persistent rain audio layer
-//   _initRainLoop() 
-//   {
-//     if (!this.audio || !this.audio.ctx) return;
-//     const a = CONFIG.audio;
-//     const buffer = AudioManager.createNoiseBuffer(this.audio.ctx, a.noiseBufferSecs);
-//     this.audio.startLoopingNoise('rain', buffer, 
-//     {
-//       type: 'bandpass',
-//       frequency: a.rainFilterFreq,
-//       Q: a.rainFilterQ
-//     });
-//   }
-
-//   // Handle all weather intensity changes
-//   changeIntensity(id)
-//   {
-//       if (!CONFIG.rainLevels || !(id in CONFIG.rainLevels))
-//       {
-//           console.warn(`EnvironmentController: Unknown rain intensity "${id}".`);
-//           return;
-//       }
-
-//       this.currentIntensity = id;
-
-//       if (this.visuals)
-//       {
-//           this.visuals.setIntensity(id);
-//       }
-
-//       if (this.audio)
-//       {
-//           this.audio.setLoopGain(
-//               'rain',
-//               CONFIG.rainLevels[id],
-//               CONFIG.audio.rainGainFadeTime
-//           );
-//       }
-
-//       this._scheduleNextStrike(id);
-//   }
-
-//   // Unified storm strike timeline
-//   _executeStormStrike(intensity) 
-//   {
-//     const cfg = CONFIG.thunderCfg[intensity];
-//     const a = CONFIG.audio;
-//     if (!cfg) return;
-
-//     // Anchor to the exact unshakeable Web Audio hardware clock
-//     const now = this.audio.ctx.currentTime;
-
-//     const payload = { crack: cfg.crack, attackSecs: a.crackAttackSecs, decaySecs: a.crackDecaySecs };
-
-//     // Firing these instantly ensures the lightning and font styles inject 
-//     // onto the page at the exact same millisecond the audio context is triggered.
-//     if (this.visuals && typeof this.visuals.flashLightning === 'function') 
-//     {
-//       this.visuals.flashLightning(payload);
-//     }
-//     if (this.text && typeof this.text.flashFont === 'function') 
-//     {
-//       this.text.flashFont(payload);
-//     }
-
-//     // Fire audio one-shots locked precisely to our hardware clock timeline
-//     this._playCrack(now, cfg);
-//     this._playRumble(now, cfg, intensity);
-//   }
-
-//   // Audio effect methods (moved from RainSounds)
-//   _playCrack(now, cfg) 
-//   {
-//     this.audio.play('thunder_crack', cfg, now);
-//   }
-
-//   // Audio effect methods (moved from RainSounds)
-//   _playRumble(now, cfg, intensity) 
-//   {
-//     if (!this.audio) return;
-//     const a = CONFIG.audio;
-//     const layerCount = CONFIG.rumbleLayers[intensity];
-    
-//     for (let l = 0; l < layerCount; l++) 
-//     {
-//       const offset = l * (a.rumbleLayerOffset + Math.random() * a.rumbleLayerRand);
-//       const vol = cfg.rumble / layerCount * (a.rumbleVolRandMin + Math.random() * a.rumbleVolRandMax);
-      
-//       this.audio.play('thunder_rumble_layer', 
-//       {
-//         rumbleLen: cfg.rumbleLen,
-//         fadeMin: cfg.fadeMin,
-//         fadeMax: cfg.fadeMax,
-//         intensity: intensity
-//       }, 
-//       now + offset);
-//     }
-//   }
-
-//   // Thunder scheduling (moved from RainSounds)
-//   _scheduleNextStrike(intensity)
-//   {
-//       clearTimeout(this.thunderTimer);
-
-//       const delayConfig = CONFIG.thunderDelay[intensity];
-
-//       if (!delayConfig)
-//       {
-//           console.warn(`EnvironmentController: No thunder delay configuration for "${intensity}".`);
-
-//           this.thunderTimer = null;
-//           return;
-//       }
-
-//       const { min, range } = delayConfig;
-//       const delay = min + Math.random() * range;
-
-//       this.thunderTimer = setTimeout(() =>
-//       {
-//           this._executeStormStrike(intensity);
-//           this._scheduleNextStrike(intensity);
-//       }, delay);
-//   }
-
-//   // ── COMPLETE LIFE CYCLE TEARDOWN ───────────────────────────
-//   destroy()
-//   {
-//     // Force the background lightning/thunder timeline generator clock to stop dead
-//     clearTimeout(this.thunderTimer);
-//     this.thunderTimer = null;
-
-//     // Erase the pointer pathways to prevent heap layout anchoring leaks
-//     this.audio = null;
-//     this.visuals = null;
-//     this.text = null;
-
-//     console.log("EnvironmentController: Background strike clocks and interval engines terminated.");
-//   }
-// }
-// ──────────────────────────────────────────────────────────────
-// ── ENVIRONMENTCONTROLLER ─────────────────────────────────────
-// ──────────────────────────────────────────────────────────────
-//
-// Description: Central coordinator for weather effects and timed events
-// Core Role:   Synchronizes audio, lightning and font effects
-// Dependencies: CONFIG, AudioManager, RainVisuals, TextDisplay
-//
-// IMPORTANT:
-//
-// A storm strike is ONE event.
-//
-// When a strike occurs:
-//
-//     STRIKE
-//       │
-//       ├──► Lightning
-//       │
-//       ├──► Font Flash
-//       │
-//       ├──► Thunder Crack
-//       │
-//       └──► Thunder Rumble
-//
-// This means there can never be a thunder strike without its
-// corresponding lightning and font flash.
-//
-// The delay only determines WHEN the next complete strike occurs.
-// ──────────────────────────────────────────────────────────────
-
 class EnvironmentController
 {
     // ── CONSTRUCTOR ────────────────────────────────────────────
@@ -202,8 +16,10 @@ class EnvironmentController
         this.visuals = visuals;
         this.text = text;
 
-        // Timer responsible for scheduling the NEXT complete strike
-        this.thunderTimer = null;
+        // ── DELTA TIME STATE TRACKING ──────────────────────────
+        // Counts down remaining seconds until the next storm strike.
+        this.strikeCountdown = 0;
+        this.isStormActive = false;
 
         // Current weather intensity
         this.currentIntensity = null;
@@ -222,26 +38,16 @@ class EnvironmentController
 
         const a = CONFIG.audio;
 
-        const buffer = AudioManager.createNoiseBuffer(
-            this.audio.ctx,
-            a.noiseBufferSecs
-        );
+        const buffer = AudioManager.createNoiseBuffer(this.audio.ctx, a.noiseBufferSecs);
 
-        this.audio.startLoopingNoise(
-            'rain',
-            buffer,
-            {
-                type: 'bandpass',
-                frequency: a.rainFilterFreq,
-                Q: a.rainFilterQ
-            }
-        );
+        this.audio.startLoopingNoise('rain', buffer, {type: 'bandpass', frequency: a.rainFilterFreq, Q: a.rainFilterQ });
     }
 
     // ── WEATHER INTENSITY ──────────────────────────────────────
     changeIntensity(id)
     {
         this.currentIntensity = id;
+        this.isStormActive = true;
 
         if (this.visuals)
         {
@@ -250,69 +56,81 @@ class EnvironmentController
 
         if (this.audio)
         {
-            this.audio.setLoopGain(
-                'rain',
-                CONFIG.rainLevels[id],
-                CONFIG.audio.rainGainFadeTime
-            );
+            this.audio.setLoopGain('rain', CONFIG.rainLevels[id], CONFIG.audio.rainGainFadeTime);
         }
 
-        // Changing intensity also restarts the strike schedule.
-        this._scheduleNextStrike(id);
+        // Changing intensity instantly seeds the first delta countdown
+        this._scheduleNextStrikeUsingDelta(id);
     }
 
-    // ── COMPLETE STORM STRIKE ──────────────────────────────────
-    //
-    // THIS is the master event.
-    //
-    // Everything associated with a lightning/thunder event
-    // originates here.
-    //
-    _executeStormStrike(intensity)
+    // ── MASTER FRAME HEARTBEAT LOOP ────────────────────────────
+    // Driven 60 times a second automatically by the core Engine loop handler
+    update(dt)
+    {
+        if (!this.isStormActive) return;
+
+        // Subtract the exact fraction of elapsed step-time (e.g., 0.0166)
+        this.strikeCountdown -= dt;
+
+        if (this.strikeCountdown <= 0)
+        {
+            // Calculate the exact frame delta overshoot.
+            // If the countdown hit -0.003, it means the frame carried a 3ms overshoot.
+            const deltaOvershoot = Math.max(0, Math.abs(this.strikeCountdown));
+
+            // Execute the strike payload with the correct delta overshoot parameter
+            this._executeStormStrike(this.currentIntensity, deltaOvershoot);
+
+            // Instantly schedule the next frame deadline
+            this._scheduleNextStrikeUsingDelta(this.currentIntensity);
+        }
+    }
+
+    // ── DELTA TIME-STEP COOLDOWN GENERATOR ─────────────────────
+    _scheduleNextStrikeUsingDelta(intensity)
     {
         const cfg = CONFIG.thunder[intensity];
 
         if (!cfg)
         {
-            console.error(
-                'EnvironmentController: No thunder configuration for intensity:',
-                intensity
-            );
+            return;
+        }
 
+        // Convert the random millisecond delay safely into pure SECONDS
+        const delayInSeconds = (cfg.minDelay + Math.random() * cfg.delayRange) / 1000;
+
+        // Set the hard frame deadline countdown slider
+        this.strikeCountdown = delayInSeconds;
+
+        console.log('[STORM] Next strike scheduled via delta frame tracker in', `${delayInSeconds.toFixed(2)} seconds`);
+    }
+
+    // ── COMPLETE STORM STRIKE EXECUTION ────────────────────────
+    _executeStormStrike(intensity, deltaOvershoot = 0)
+    {
+        const cfg = CONFIG.thunder[intensity];
+
+        if (!cfg)
+        {
+            console.error('EnvironmentController: No thunder configuration for intensity:', intensity);
             return;
         }
 
         if (!this.audio || !this.audio.ctx)
         {
-            console.warn(
-                'EnvironmentController: Audio system unavailable for storm strike.'
-            );
-
+            console.warn('EnvironmentController: Audio system unavailable for storm strike.');
             return;
         }
 
-        // Use the exact Web Audio clock for synchronized audio scheduling.
         const now = this.audio.ctx.currentTime;
 
-        // ── BUILD ONE SHARED STRIKE PAYLOAD ────────────────────
-        //
-        // The exact same timing information is sent to both
-        // lightning and font flash.
-        //
-        // This is what keeps the visual effects synchronized.
-
-        const payload =
-        {
-            crack: cfg.crackVolume,
-            lightningPeak: cfg.lightningPeak,
-            attackSecs: cfg.flashAttack,
-            decaySecs: cfg.flashDecay
-        };
+        const payload = { crack: cfg.crackVolume, lightningPeak: cfg.lightningPeak, attackSecs: cfg.flashAttack, decaySecs: cfg.flashDecay };
 
         console.log(
-            '[STORM] STRIKE',
+            '[STORM] STRIKE PULSE',
             {
                 intensity,
+                deltaOvershoot: `${deltaOvershoot.toFixed(3)}s`,
                 lightningPeak: cfg.lightningPeak,
                 flashAttack: cfg.flashAttack,
                 flashDecay: cfg.flashDecay,
@@ -321,64 +139,38 @@ class EnvironmentController
             }
         );
 
-        // ── LIGHTNING ──────────────────────────────────────────
-        //
-        // Lightning receives the shared strike payload.
-
-        if (
-            this.visuals &&
-            typeof this.visuals.flashLightning === 'function'
-        )
+        // Forward deltaOvershoot straight into your visual controllers
+        if (this.visuals && typeof this.visuals.flashLightning === 'function')
         {
-            this.visuals.flashLightning(payload);
+            this.visuals.flashLightning(payload, deltaOvershoot);
         }
 
-        // ── FONT FLASH ─────────────────────────────────────────
-        //
-        // Font receives the EXACT SAME strike payload.
-        //
-        // Therefore there is no independent font-flash timer.
-        // The font flashes because THIS lightning strike happened.
-
-        if (
-            this.text &&
-            typeof this.text.flashFont === 'function'
-        )
+        // Forward deltaOvershoot straight into your text layout managers
+        if (this.text && typeof this.text.flashFont === 'function')
         {
-            this.text.flashFont(payload);
+            this.text.flashFont(payload, deltaOvershoot);
         }
 
-        // ── THUNDER CRACK ──────────────────────────────────────
-        //
-        // Crack starts at the same Web Audio timestamp as the
-        // visual strike.
-
-        this._playCrack(now, cfg);
-
-        // ── THUNDER RUMBLE ──────────────────────────────────────
-
-        this._playRumble(now, cfg, intensity);
+        // Forward deltaOvershoot parameter straight down to your audio nodes
+        this._playCrack(now, cfg, deltaOvershoot);
+        this._playRumble(now, cfg, intensity, deltaOvershoot);
     }
 
     // ── THUNDER CRACK ──────────────────────────────────────────
-    _playCrack(now, cfg)
+    _playCrack(now, cfg, deltaOvershoot = 0)
     {
-        if (!this.audio)
+        if (!this.audio) 
         {
             return;
         }
-
-        this.audio.play(
-            'thunder_crack',
-            cfg,
-            now
-        );
+        
+        this.audio.play('thunder_crack', cfg, now, deltaOvershoot);
     }
 
     // ── THUNDER RUMBLE ─────────────────────────────────────────
-    _playRumble(now, cfg, intensity)
+    _playRumble(now, cfg, intensity, deltaOvershoot = 0)
     {
-        if (!this.audio)
+        if (!this.audio) 
         {
             return;
         }
@@ -388,20 +180,8 @@ class EnvironmentController
 
         for (let l = 0; l < layerCount; l++)
         {
-            const offset =
-                l *
-                (
-                    a.rumbleLayerOffset +
-                    Math.random() * a.rumbleLayerRand
-                );
-
-            const vol =
-                cfg.rumbleVolume /
-                layerCount *
-                (
-                    a.rumbleVolRandMin +
-                    Math.random() * a.rumbleVolRandMax
-                );
+            const offset = l * (a.rumbleLayerOffset + Math.random() * a.rumbleLayerRand);
+            const vol = cfg.rumbleVolume / layerCount * (a.rumbleVolRandMin + Math.random() * a.rumbleVolRandMax);
 
             this.audio.play(
                 'thunder_rumble_layer',
@@ -412,72 +192,22 @@ class EnvironmentController
                     intensity,
                     volume: vol
                 },
-                now + offset
+                now + offset,
+                deltaOvershoot
             );
         }
-    }
-
-    // ── NEXT STRIKE SCHEDULER ──────────────────────────────────
-    //
-    // This controls ONLY the time between complete storm strikes.
-    //
-    // Example:
-    //
-    // Storm:
-    //     wait 8-16 seconds
-    //          ↓
-    //       STRIKE
-    //          ↓
-    //     wait 8-16 seconds
-    //          ↓
-    //       STRIKE
-    //
-    // Every STRIKE automatically contains lightning + font +
-    // thunder.
-
-    _scheduleNextStrike(intensity)
-    {
-        clearTimeout(this.thunderTimer);
-
-        const cfg = CONFIG.thunder[intensity];
-
-        if (!cfg)
-        {
-            return;
-        }
-
-        const delay =
-            cfg.minDelay +
-            Math.random() * cfg.delayRange;
-
-        console.log(
-            '[STORM] Next strike scheduled in',
-            `${(delay / 1000).toFixed(2)} seconds`
-        );
-
-        this.thunderTimer = setTimeout(() =>
-        {
-            // Create ONE complete synchronized storm event.
-            this._executeStormStrike(intensity);
-
-            // Schedule the next complete event.
-            this._scheduleNextStrike(intensity);
-
-        }, delay);
     }
 
     // ── COMPLETE LIFE CYCLE TEARDOWN ───────────────────────────
     destroy()
     {
-        clearTimeout(this.thunderTimer);
-        this.thunderTimer = null;
+        this.isStormActive = false;
+        this.strikeCountdown = 0;
 
         this.audio = null;
         this.visuals = null;
         this.text = null;
 
-        console.log(
-            'EnvironmentController: Storm scheduler and system references destroyed.'
-        );
+        console.log('EnvironmentController: Delta system and framework tracking destroyed.');
     }
 }

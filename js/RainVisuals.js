@@ -28,9 +28,8 @@ class RainVisuals
     }
     
     // Effect timers
-    this._flashTimer  = null;
-    this._grainTimer = 0;
-    this._grainTextures = {};
+    this.flashTimeRemaining = 0;
+    this.isFlashing = false;
     
     // Initialize film grain effect
     this._initGrain();
@@ -75,15 +74,6 @@ class RainVisuals
     if (noiseOverlay) 
     {
       noiseOverlay.style.backgroundImage = `url(${grainDataUrl})`;
-    }
-  }
-
-  _preGenerateGrainTextures() 
-  {
-    this._grainTextures = {};
-    for (const intensity in CONFIG.intensities) 
-    {
-      this._grainTextures[intensity] = this._createTexture(CONFIG.grain.alpha);
     }
   }
 
@@ -134,52 +124,56 @@ class RainVisuals
     });
   }
 
-  flashLightning({ lightningPeak, attackSecs, decaySecs })
-  {
-      if (!this.lightning)
-      {
-          return;
-      }
+  flashLightning({ lightningPeak, attackSecs, decaySecs }, deltaOvershoot = 0)
+{
+    if (!this.lightning)
+    {
+        return;
+    }
 
-      // Cancel the previous lightning reset timer.
-      clearTimeout(this._flashTimer);
+    // Configure the exact timing for THIS strike.
+    this.lightning.style.setProperty('--lightning-attack', `${attackSecs}s`);
+    this.lightning.style.setProperty('--lightning-decay', `${decaySecs}s`);
+    this.lightning.style.setProperty('--lightning-peak', String(Math.min(1, lightningPeak)));
 
-      // Configure the exact timing for THIS strike.
-      this.lightning.style.setProperty(
-          '--lightning-attack',
-          `${attackSecs}s`
-      );
+    console.log('[LIGHTNING] FLASH USING DELTA', {peak: lightningPeak, attack: attackSecs ,decay: decaySecs, overshoot: deltaOvershoot});
 
-      this.lightning.style.setProperty(
-          '--lightning-decay',
-          `${decaySecs}s`
-      );
+    // Trigger the lightning flash.
+    this.lightning.dataset.flash = 'active';
 
-      this.lightning.style.setProperty(
-          '--lightning-peak',
-          String(Math.min(1, lightningPeak))
-      );
+    // ── THE TIMING FIX ─────────────────────────────────────
+    // Calculate total animation lifespan in SECONDS
+    const totalLifespan = attackSecs + decaySecs;
 
-      console.log(
-          '[LIGHTNING] FLASH',
-          {
-              peak: lightningPeak,
-              attack: attackSecs,
-              decay: decaySecs
-          }
-      );
+    // Subtract the loop's delta overshoot so the visual state
+    // matches the hardware audio execution exactly
+    this.flashTimeRemaining = totalLifespan - deltaOvershoot;
+    this.isFlashing = true;
+}
 
-      // Trigger the lightning flash.
-      this.lightning.dataset.flash = 'active';
+// ── MASTER VISUAL TICK LOOP ──────────────────────────────────
+// Driven 60 times a second by your Engine.js game loop
+update(dt)
+{
+    if (!this.isFlashing) return;
 
-      // Give the browser enough time to complete the visual
-      // transition before removing the active state.
-      this._flashTimer = setTimeout(() =>
-      {
-          if (this.lightning)
-          {
-              this.lightning.dataset.flash = 'inactive';
-          }
-      }, (attackSecs + decaySecs) * 1000);
-  }
+    // Count down by the fixed frame step fraction (1/60)
+    this.flashTimeRemaining -= dt;
+
+    if (this.flashTimeRemaining <= 0)
+    {
+        // The animation time has officially expired on this exact loop tick!
+        if (this.lightning)
+        {
+            this.lightning.dataset.flash = 'inactive';
+        }
+
+        console.log('[LIGHTNING] FLASH COMPLETE VIA DELTA HEARTBEAT');
+        
+        // Reset the state machine back to idle
+        this.isFlashing = false;
+        this.flashTimeRemaining = 0;
+    }
+}
+
 }

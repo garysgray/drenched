@@ -32,8 +32,8 @@ class HUD extends UIComponent
       // Auto-hide configuration is supplied by Engine from CONFIG.
       this._autoHideSettings = autoHideConfig;
 
-      // Auto-hide timer reference
-      this.hideTimer = null;
+      this.hudIdleCountdown = 0;
+      this.isHudTimerActive = false;
 
       // Save named listener reference so it can be removed during destroy()
       this._boundShow = () => this.show();
@@ -145,36 +145,56 @@ class HUD extends UIComponent
       document.addEventListener('touchstart', this._boundShow);
       document.addEventListener('touchmove', this._boundShow);
   }
+  // ── MASTER HUD TICK LOOP ─────────────────────────────────────
+    // Driven 60 times a second by your Engine.js game loop
+    update(dt)
+    {
+        if (!this.isHudTimerActive) return;
+
+        // Tick down the countdown by the fixed frame fraction (1/60)
+        this.hudIdleCountdown -= dt;
+
+        if (this.hudIdleCountdown <= 0)
+        {
+            // The mouse idle time has officially expired on this exact loop tick!
+            this.hide();
+            
+            // Reset the tracker states back to idle
+            this.isHudTimerActive = false;
+            this.hudIdleCountdown = 0;
+        }
+    }
+
 
   // ── SHOW HUD ───────────────────────────────────────────────
   // Makes the HUD visible and restarts the auto-hide countdown.
-  show()
-  {
-      if (!this.el || !this._autoHideSettings)
-      {
-          return;
-      }
+    show()
+    {
+        if (!this.el || !this._autoHideSettings)
+        {
+            return;
+        }
 
-      requestAnimationFrame(() =>
-      {
-          this.el.style.cssText = `
-              transition: ${this._autoHideSettings.transitionCss};
-              opacity: 1;
-              pointer-events: auto;
-              transform: translateX(-50%) translateY(0);
-          `;
+        requestAnimationFrame(() =>
+        {
+            this.el.style.cssText = `
+                transition: ${this._autoHideSettings.transitionCss};
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateX(-50%) translateY(0);
+            `;
 
-          document.body.style.cursor = 'crosshair';
-      });
+            document.body.style.cursor = 'crosshair';
+        });
 
-      clearTimeout(this.hideTimer);
+        // ── THE TIMING FIX ─────────────────────────────────────
+        // Convert your configured milliseconds safely into pure SECONDS
+        const autoHideSeconds = this._autoHideSettings.autoHideMs / 1000;
 
-      this.hideTimer = setTimeout(
-          () => this.hide(),
-          this._autoHideSettings.autoHideMs
-      );
-  }
-
+        // Seed the active countdown deadline
+        this.hudIdleCountdown = autoHideSeconds;
+        this.isHudTimerActive = true;
+    }
   // ── HIDE HUD ───────────────────────────────────────────────
   // Hides the HUD after the configured inactivity period.
   hide()
