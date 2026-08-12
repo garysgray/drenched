@@ -18,63 +18,112 @@ class Engine
     // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor()
     {
-        // Instantiate all core execution and visual layers on boot
+        // Set up defaults and pull your values straight from storage
+        let activeTheme = Object.keys(CONFIG.colors)[0]; 
+        let activeMode = CONFIG.intensitiesModes.RAIN;   
+        let currentMute = false;                        
+        let currentScrollMode = false; 
+        let currentTextMode = false;
+        let currentVolume = CONFIG.masterVolume; 
+        let currentScrollSpeed = CONFIG.scroll.defaultSpeedSecs;
+        
+        try 
+        {
+            const savedData = localStorage.getItem("siteSettings");
+            if (savedData) 
+            {
+                const settings = JSON.parse(savedData);
+                
+                if (settings.colorTheme) activeTheme = settings.colorTheme;
+                if (settings.rainIntensity) activeMode = settings.rainIntensity;
+                if (settings.muteMode !== undefined) currentMute = settings.muteMode;
+                if (settings.scrollMode !== undefined) currentScrollMode = settings.scrollMode;
+                if (settings.textMode !== undefined) currentTextMode = settings.textMode;
+                if (settings.masterVolume !== undefined) currentVolume = settings.masterVolume;
+                if (settings.scrollSpeed !== undefined) currentScrollSpeed = settings.scrollSpeed;
+            }
+        } 
+        catch(e) 
+        {
+            console.error("Engine: Failed to read initial theme from storage", e);
+        }
+
+        // Instantiate core layers using the parsed storage properties cleanly
+        this.audio = new AudioManager(currentVolume / 100);
         this.textDisplayInstance = new TextDisplay();
-
-        const HUDInstance = new HUD(CONFIG.hud);
-
-        this.audio = new AudioManager(CONFIG.masterVolume);
+        this.hud = new HUD(CONFIG.hud);
         this.visuals = new RainVisuals();
-
         this.environment = new EnvironmentController(this.audio, this.visuals, this.textDisplayInstance);
         this.ui = new UIManager(this.audio, this.visuals, this.environment);
 
-        // ── UI COMPONENT REGISTRATION ─────────────────────────
-        this.ui.registerComponent('primary_hud', HUDInstance);
+        // UI COMPONENT REGISTRATION
+        this.ui.registerComponent('primary_hud', this.hud); 
         this.ui.registerComponent('text_display', this.textDisplayInstance);
-        this.hud = HUDInstance; // Save reference for the loop updater
 
         // Handle browser audio autoplay restrictions
         document.addEventListener('click', () => this.audio.resume(), { once: true });
 
-        // Start with default weather parameters
-        this.start(CONFIG.intensitiesModes.RAIN, Object.keys(CONFIG.colors));
+        // Trigger system startup sequence
+        this.start(activeMode, activeTheme, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed);
     }
-
-    // ── INCOMING DELTA ENGINE STEP ROUTER ──────────────────────
+    // ── CORE UPDATE TICK ───────────────────────────────────────
+    // Called by Main's gameLoop with the FIXED_TIMESTEP delta time
     update(dt)
     {
-        // Route delta down to storm coordinator
-        if (this.environment && typeof this.environment.update === 'function')
+        if (this.environment && typeof this.environment.update === 'function') this.environment.update(dt);
+        if (this.textDisplayInstance && typeof this.textDisplayInstance.update === 'function') this.textDisplayInstance.update(dt); 
+        if (this.visuals && typeof this.visuals.update === 'function') this.visuals.update(dt);
+        if (this.hud && typeof this.hud.update === 'function') this.hud.update(dt);
+    }
+    // ── INITIAL SYSTEM START ───────────────────────────────────
+        start(intensityId, colorThemeId, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed)
+    {
+        if (this.environment) this.environment.changeIntensity(intensityId);
+        if (this.visuals && typeof this.visuals.setColor === 'function') this.visuals.setColor(colorThemeId);
+
+        if (this.audio)
         {
-            this.environment.update(dt);
+            if (typeof this.audio.setMute === 'function') {
+                this.audio.setMute(currentMute);
+            } else {
+                this.audio.isMuted = currentMute; 
+            }
+
+            if (typeof this.audio.setMasterVolume === 'function') {
+                this.audio.setMasterVolume(currentVolume / 100);
+            } else {
+                this.audio.masterVolume = currentVolume / 100;
+            }
         }
 
-        // Route delta down to visual font text layers
-        if (this.textDisplayInstance && typeof this.textDisplayInstance.update === 'function')
+        // BROADCAST INITIAL LAYOUT STATES TO UI COMPONENTS
+        if (this.ui && typeof this.ui.initLayoutStates === 'function')
         {
-            this.textDisplayInstance.update(dt); 
-        }
-
-        // Route delta down to visual rain layer layout math
-        if (this.visuals && typeof this.visuals.update === 'function')
-        {
-            this.visuals.update(dt);
-        }
-
-        // Route delta down to mouse-idle HUD countdown counters
-        if (this.hud && typeof this.hud.update === 'function')
-        {
-            this.hud.update(dt);
+            this.ui.initLayoutStates([
+                { actionType: CONFIG.UIActions.SET_RAIN_INTENSITY, value: intensityId },
+                { actionType: CONFIG.UIActions.SET_COLOR, value: colorThemeId },
+                { actionType: CONFIG.UIActions.TOGGLE_MUTE, value: currentMute },
+                { actionType: CONFIG.UIActions.TOGGLE_SCROLL_MODE, value: currentScrollMode },
+                { actionType: CONFIG.UIActions.SET_TEXT_MODE, value: currentTextMode },
+                { actionType: CONFIG.UIActions.SET_MASTER_VOLUME, value: currentVolume },
+                { actionType: CONFIG.UIActions.SET_SCROLL_SPEED, value: currentScrollSpeed }
+            ]);
         }
     }
-
-    // ── INITIAL SYSTEM START ───────────────────────────────────
-    start(intensityId, colorThemeId)
+    // ── MASTER CLEANUP LIFECYCLE ───────────────────────────────
+    shutdown()
     {
-        if (this.environment)
+        console.log("Engine: Commencing complete system teardown...");
+        if (this.ui && this.ui.components) 
         {
-            this.environment.changeIntensity(intensityId);
+            this.ui.components.forEach((c) => { if (c && typeof c.destroy === 'function') c.destroy(); });
         }
+        if (this.ui && typeof this.ui.destroy === 'function') this.ui.destroy();
+        if (this.audio && typeof this.audio.stopAll === 'function') this.audio.stopAll();
+        if (this.visuals && typeof this.visuals.destroy === 'function') this.visuals.destroy();
+        if (this.environment && typeof this.environment.destroy === 'function') this.environment.destroy();
+
+        this.audio = null; this.visuals = null; this.environment = null; this.ui = null;
+        console.log("Engine: Teardown complete.");
     }
 }

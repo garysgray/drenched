@@ -211,7 +211,7 @@ thunder: Object.freeze(
 
   scroll: Object.freeze(
   {
-    defaultSpeedSecs: 20,
+    defaultSpeedSecs: 40,
     minSpeedSecs:     5,
     maxSpeedSecs:     40,
   }),
@@ -250,7 +250,7 @@ const CONFIG =
   get text() { return _configData.text; },
   
   // Mutable properties
-  _masterVolume: 1,
+  _masterVolume: 100,
   get masterVolume() { return this._masterVolume; },
   set masterVolume(value) 
   {

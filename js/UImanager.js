@@ -105,7 +105,6 @@ class UIManager
 
         switch (actionType)
         {
-            // RAIN INTENSITY ENGINE PIPE
             case CONFIG.UIActions.SET_RAIN_INTENSITY:
 
                 if (this.engines.environment && typeof this.engines.environment.changeIntensity === 'function')
@@ -113,9 +112,9 @@ class UIManager
                     this.engines.environment.changeIntensity(value);
                 }
 
+                this._saveSetting('rainIntensity', value);
                 break;
 
-            // COLOR VISUAL ENGINE PIPE
             case CONFIG.UIActions.SET_COLOR:
 
                 if (this.engines.visuals && typeof this.engines.visuals.setColor === 'function')
@@ -123,9 +122,9 @@ class UIManager
                     this.engines.visuals.setColor(value);
                 }
 
+                this._saveSetting('colorTheme', value);
                 break;
 
-            // MASTER VOLUME ENGINE PIPE
             case CONFIG.UIActions.SET_MASTER_VOLUME:
 
                 if (this.engines.audio && typeof this.engines.audio.setMasterVolume === 'function')
@@ -136,29 +135,32 @@ class UIManager
                 }
                 else if (this.engines.audio)
                 {
-                    // Fallback for AudioManager implementations that
-                    // expose masterVolume directly.
                     this.engines.audio.masterVolume = value / 100;
                 }
 
+                this._saveSetting('masterVolume', value);
                 break;
 
-            // MUTE STATE ENGINE PIPE
             case CONFIG.UIActions.TOGGLE_MUTE:
 
                 if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function')
                 {
-                    // toggleMute() returns the new true/false mute state.
-                    // Broadcast that actual state to the UI components.
                     broadcastValue = this.engines.audio.toggleMute();
                 }
 
+                this._saveSetting('muteMode', broadcastValue);
                 break;
 
-            // SCROLL SPEED ENGINE PIPE
-            // Currently handled visually by UI components.
-            // No engine action is required here.
             case CONFIG.UIActions.SET_SCROLL_SPEED:
+                this._saveSetting('scrollSpeed', broadcastValue);
+                break;
+
+            case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
+                this._saveSetting('scrollMode', broadcastValue);
+                break;
+
+            case CONFIG.UIActions.SET_TEXT_MODE:
+                this._saveSetting('textMode', broadcastValue);
                 break;
         }
 
@@ -196,6 +198,26 @@ class UIManager
             });
         });
     }
+
+        // ── NEW UTILITY: SAVE TO LOCALSTORAGE ──────────────────────
+    _saveSetting(key, value)
+    {
+        try 
+        {
+            const savedData = localStorage.getItem("siteSettings");
+            const currentSettings = savedData ? JSON.parse(savedData) : {};
+            
+            // Set the dynamic property key (like colorTheme, masterVolume, etc.)
+            currentSettings[key] = value;
+            
+            localStorage.setItem("siteSettings", JSON.stringify(currentSettings));
+        } 
+        catch (e) 
+        {
+            console.error(`UIManager: Failed to save setting "${key}"`, e);
+        }
+    }
+
 
     // ── CLEANUP ────────────────────────────────────────────────
     // Cleans up the UI controller to prevent lingering event listeners.

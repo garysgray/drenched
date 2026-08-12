@@ -23,7 +23,7 @@ class HUD extends UIComponent
       this.el = document.querySelector('.HUD');
 
       // Cache control element references
-      this.slider = document.getElementById('scroll-speed');
+      this.scrollSlider = document.getElementById('scroll-speed');
       this.label = document.getElementById('scroll-speed-val');
       this.volSlider = document.getElementById('master-volume');
       this.volLabel = document.getElementById('master-volume-val');
@@ -40,6 +40,9 @@ class HUD extends UIComponent
 
       // Initialize HUD auto-hide behavior
       this._initAutoHide();
+
+      this.initScrollSlider();
+      this.initVolumeUI();
   }
 
   // ── EVENT MAP CONFIGURATION ───────────────────────────────
@@ -100,10 +103,19 @@ class HUD extends UIComponent
       switch(actionType)
       {
           case CONFIG.UIActions.SET_SCROLL_SPEED:
+              // 1. Force the physical slider element handle to move
+              if (this.scrollSlider) {
+                  this.scrollSlider.value = value;
+              }
+              // 2. Refresh the visible textual readout label on your screen
               this.updateSliderLabel();
               break;
 
           case CONFIG.UIActions.SET_MASTER_VOLUME:
+              // Force the slider knob to jump to the loaded value
+              if (this.volSlider) {
+                  this.volSlider.value = value;
+              }
               this.updateVolumeLabel();
               break;
 
@@ -312,11 +324,11 @@ class HUD extends UIComponent
   // Setup initial text scroll slider bounds using values directly from CONFIG.
   initScrollSlider()
   {
-      if (this.slider)
+      if (this.scrollSlider)
       {
-          this.slider.min = CONFIG.scroll.minSpeedSecs;
-          this.slider.max = CONFIG.scroll.maxSpeedSecs;
-          this.slider.value = CONFIG.scroll.defaultSpeedSecs;
+          this.scrollSlider.min = CONFIG.scroll.minSpeedSecs;
+          this.scrollSlider.max = CONFIG.scroll.maxSpeedSecs;
+          this.scrollSlider.value = CONFIG.scroll.defaultSpeedSecs;
 
           this.updateSliderLabel();
       }
@@ -326,22 +338,39 @@ class HUD extends UIComponent
   // Updates the visual duration number next to the scroll speed bar.
   updateSliderLabel()
   {
-      if (this.label && this.slider)
+      if (this.label && this.scrollSlider)
       {
-          this.label.textContent = `${this.slider.value}s`;
+          this.label.textContent = `${this.scrollSlider.value}s`;
       }
   }
 
   // ── VOLUME UI INITIALIZATION ───────────────────────────────
   // Seed starting volume layout numbers based on configuration.
+   // ── VOLUME UI INITIALIZATION ───────────────────────────────
+  // Seed starting volume layout numbers based on configuration or storage.
   initVolumeUI()
   {
       if (this.volSlider && this.volLabel)
       {
-          this.volSlider.value = Math.round(CONFIG.masterVolume * 100);
+          let startingVolume = Math.round(CONFIG.masterVolume * 100); // Fallback default
+
+          try {
+              const savedData = localStorage.getItem("siteSettings");
+              if (savedData) {
+                  const settings = JSON.parse(savedData);
+                  if (settings.masterVolume !== undefined) {
+                      startingVolume = settings.masterVolume;
+                  }
+              }
+          } catch(e) {
+              console.error("HUD: Failed to parse storage volume on boot", e);
+          }
+
+          this.volSlider.value = startingVolume;
           this.updateVolumeLabel();
       }
   }
+
 
   // ── VOLUME LABEL ───────────────────────────────────────────
   // Synchronizes the text percentage readout on screen.
