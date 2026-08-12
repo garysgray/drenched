@@ -3,7 +3,7 @@
 // ──────────────────────────────────────────────────────────────
 //
 // Description: Centralized configuration store for all magic numbers and
-//              runtime constants. Ensures consistency across the project.
+// runtime constants. Ensures consistency across the project.
 // Core Role:   Single source of truth for all configurable values
 // Dependencies: None (base-level dependency for all other files)
 
