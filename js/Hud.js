@@ -352,25 +352,13 @@ class HUD extends UIComponent
   {
       if (this.volSlider && this.volLabel)
       {
-          let startingVolume = Math.round(CONFIG.masterVolume * 100); // Fallback default
-
-          try {
-              const savedData = localStorage.getItem("siteSettings");
-              if (savedData) {
-                  const settings = JSON.parse(savedData);
-                  if (settings.masterVolume !== undefined) {
-                      startingVolume = settings.masterVolume;
-                  }
-              }
-          } catch(e) {
-              console.error("HUD: Failed to parse storage volume on boot", e);
-          }
-
-          this.volSlider.value = startingVolume;
+          // Simply pass the key you want and the default fallback value
+          const defaultVol = Math.round(CONFIG.masterVolume * 100);
+          this.volSlider.value = StorageUtil.get('masterVolume', defaultVol);
+          
           this.updateVolumeLabel();
       }
   }
-
 
   // ── VOLUME LABEL ───────────────────────────────────────────
   // Synchronizes the text percentage readout on screen.

@@ -18,38 +18,11 @@ class Engine
     // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor()
     {
-        // Set up defaults and pull your values straight from storage
-        let activeTheme = Object.keys(CONFIG.colors)[0]; 
-        let activeMode = CONFIG.intensitiesModes.RAIN;   
-        let currentMute = false;                        
-        let currentScrollMode = false; 
-        let currentTextMode = false;
-        let currentVolume = CONFIG.masterVolume; 
-        let currentScrollSpeed = CONFIG.scroll.defaultSpeedSecs;
-        
-        try 
-        {
-            const savedData = localStorage.getItem("siteSettings");
-            if (savedData) 
-            {
-                const settings = JSON.parse(savedData);
-                
-                if (settings.colorTheme) activeTheme = settings.colorTheme;
-                if (settings.rainIntensity) activeMode = settings.rainIntensity;
-                if (settings.muteMode !== undefined) currentMute = settings.muteMode;
-                if (settings.scrollMode !== undefined) currentScrollMode = settings.scrollMode;
-                if (settings.textMode !== undefined) currentTextMode = settings.textMode;
-                if (settings.masterVolume !== undefined) currentVolume = settings.masterVolume;
-                if (settings.scrollSpeed !== undefined) currentScrollSpeed = settings.scrollSpeed;
-            }
-        } 
-        catch(e) 
-        {
-            console.error("Engine: Failed to read initial theme from storage", e);
-        }
+        // 1. FIRST: Run the settings loader function to bind all properties directly to 'this'
+        this._loadSettingsFromStorage();
 
-        // Instantiate core layers using the parsed storage properties cleanly
-        this.audio = new AudioManager(currentVolume / 100);
+        // 2. SECOND: Now instantiate your core layers cleanly using your class properties
+        this.audio = new AudioManager(this.currentVolume / 100);
         this.textDisplayInstance = new TextDisplay();
         this.hud = new HUD(CONFIG.hud);
         this.visuals = new RainVisuals();
@@ -63,9 +36,22 @@ class Engine
         // Handle browser audio autoplay restrictions
         document.addEventListener('click', () => this.audio.resume(), { once: true });
 
-        // Trigger system startup sequence
-        this.start(activeMode, activeTheme, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed);
+        // Trigger system startup sequence passing the assigned instance values
+        this.start(this.activeMode, this.activeTheme, this.currentMute, this.currentScrollMode, this.currentTextMode, this.currentVolume, this.currentScrollSpeed);
     }
+
+    // ── NEW FUNCTION: SEPARATE STORAGE LOADER ───────────────────
+    _loadSettingsFromStorage()
+    {
+        this.activeTheme       = StorageUtil.get('colorTheme', Object.keys(CONFIG.colors)); 
+        this.activeMode        = StorageUtil.get('rainIntensity', CONFIG.intensitiesModes.RAIN);   
+        this.currentMute        = StorageUtil.get('muteMode', false);                        
+        this.currentScrollMode  = StorageUtil.get('scrollMode', false); 
+        this.currentTextMode    = StorageUtil.get('textMode', false);
+        this.currentVolume      = StorageUtil.get('masterVolume', CONFIG.masterVolume); 
+        this.currentScrollSpeed = StorageUtil.get('scrollSpeed', CONFIG.scroll.defaultSpeedSecs);
+    }
+    
     // ── CORE UPDATE TICK ───────────────────────────────────────
     // Called by Main's gameLoop with the FIXED_TIMESTEP delta time
     update(dt)

@@ -261,3 +261,36 @@ const CONFIG =
 
 // Freeze the CONFIG object to prevent modifications
 Object.freeze(CONFIG);
+
+
+const StorageUtil = {
+    // ── READ A SETTING FROM STORAGE ──────────────────────────
+    get(key, fallbackValue) {
+        try {
+            const savedData = localStorage.getItem("siteSettings");
+            if (savedData) {
+                const settings = JSON.parse(savedData);
+                if (settings[key] !== undefined) {
+                    return settings[key];
+                }
+            }
+        } catch (e) {
+            console.error(`StorageUtil: Failed to read key "${key}"`, e);
+        }
+        return fallbackValue; // Return default if nothing is found
+    },
+
+    // ── WRITE A SETTING TO STORAGE ───────────────────────────
+    set(key, value) {
+        try {
+            const savedData = localStorage.getItem("siteSettings");
+            const currentSettings = savedData ? JSON.parse(savedData) : {};
+            
+            currentSettings[key] = value;
+            
+            localStorage.setItem("siteSettings", JSON.stringify(currentSettings));
+        } catch (e) {
+            console.error(`StorageUtil: Failed to save key "${key}"`, e);
+        }
+    }
+};

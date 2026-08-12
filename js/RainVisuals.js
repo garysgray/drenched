@@ -125,55 +125,55 @@ class RainVisuals
   }
 
   flashLightning({ lightningPeak, attackSecs, decaySecs }, deltaOvershoot = 0)
-{
-    if (!this.lightning)
-    {
-        return;
-    }
+  {
+      if (!this.lightning)
+      {
+          return;
+      }
 
-    // Configure the exact timing for THIS strike.
-    this.lightning.style.setProperty('--lightning-attack', `${attackSecs}s`);
-    this.lightning.style.setProperty('--lightning-decay', `${decaySecs}s`);
-    this.lightning.style.setProperty('--lightning-peak', String(Math.min(1, lightningPeak)));
+      // Configure the exact timing for THIS strike.
+      this.lightning.style.setProperty('--lightning-attack', `${attackSecs}s`);
+      this.lightning.style.setProperty('--lightning-decay', `${decaySecs}s`);
+      this.lightning.style.setProperty('--lightning-peak', String(Math.min(1, lightningPeak)));
 
-    console.log('[LIGHTNING] FLASH USING DELTA', {peak: lightningPeak, attack: attackSecs ,decay: decaySecs, overshoot: deltaOvershoot});
+      console.log('[LIGHTNING] FLASH USING DELTA', {peak: lightningPeak, attack: attackSecs ,decay: decaySecs, overshoot: deltaOvershoot});
 
-    // Trigger the lightning flash.
-    this.lightning.dataset.flash = 'active';
+      // Trigger the lightning flash.
+      this.lightning.dataset.flash = 'active';
 
-    // ── THE TIMING FIX ─────────────────────────────────────
-    // Calculate total animation lifespan in SECONDS
-    const totalLifespan = attackSecs + decaySecs;
+      // ── THE TIMING FIX ─────────────────────────────────────
+      // Calculate total animation lifespan in SECONDS
+      const totalLifespan = attackSecs + decaySecs;
 
-    // Subtract the loop's delta overshoot so the visual state
-    // matches the hardware audio execution exactly
-    this.flashTimeRemaining = totalLifespan - deltaOvershoot;
-    this.isFlashing = true;
-}
+      // Subtract the loop's delta overshoot so the visual state
+      // matches the hardware audio execution exactly
+      this.flashTimeRemaining = totalLifespan - deltaOvershoot;
+      this.isFlashing = true;
+  }
 
-// ── MASTER VISUAL TICK LOOP ──────────────────────────────────
-// Driven 60 times a second by your Engine.js game loop
-update(dt)
-{
-    if (!this.isFlashing) return;
+  // ── MASTER VISUAL TICK LOOP ──────────────────────────────────
+  // Driven 60 times a second by your Engine.js game loop
+  update(dt)
+  {
+      if (!this.isFlashing) return;
 
-    // Count down by the fixed frame step fraction (1/60)
-    this.flashTimeRemaining -= dt;
+      // Count down by the fixed frame step fraction (1/60)
+      this.flashTimeRemaining -= dt;
 
-    if (this.flashTimeRemaining <= 0)
-    {
-        // The animation time has officially expired on this exact loop tick!
-        if (this.lightning)
-        {
-            this.lightning.dataset.flash = 'inactive';
-        }
+      if (this.flashTimeRemaining <= 0)
+      {
+          // The animation time has officially expired on this exact loop tick!
+          if (this.lightning)
+          {
+              this.lightning.dataset.flash = 'inactive';
+          }
 
-        console.log('[LIGHTNING] FLASH COMPLETE VIA DELTA HEARTBEAT');
-        
-        // Reset the state machine back to idle
-        this.isFlashing = false;
-        this.flashTimeRemaining = 0;
-    }
-}
+          console.log('[LIGHTNING] FLASH COMPLETE VIA DELTA HEARTBEAT');
+          
+          // Reset the state machine back to idle
+          this.isFlashing = false;
+          this.flashTimeRemaining = 0;
+      }
+  }
 
 }

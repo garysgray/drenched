@@ -111,8 +111,7 @@ class UIManager
                 {
                     this.engines.environment.changeIntensity(value);
                 }
-
-                this._saveSetting('rainIntensity', value);
+                StorageUtil.set('rainIntensity', value);
                 break;
 
             case CONFIG.UIActions.SET_COLOR:
@@ -121,8 +120,7 @@ class UIManager
                 {
                     this.engines.visuals.setColor(value);
                 }
-
-                this._saveSetting('colorTheme', value);
+                StorageUtil.set('colorTheme', value);
                 break;
 
             case CONFIG.UIActions.SET_MASTER_VOLUME:
@@ -137,8 +135,7 @@ class UIManager
                 {
                     this.engines.audio.masterVolume = value / 100;
                 }
-
-                this._saveSetting('masterVolume', value);
+                StorageUtil.set('masterVolume', value);
                 break;
 
             case CONFIG.UIActions.TOGGLE_MUTE:
@@ -147,20 +144,19 @@ class UIManager
                 {
                     broadcastValue = this.engines.audio.toggleMute();
                 }
-
-                this._saveSetting('muteMode', broadcastValue);
+                StorageUtil.set('muteMode', broadcastValue);
                 break;
 
             case CONFIG.UIActions.SET_SCROLL_SPEED:
-                this._saveSetting('scrollSpeed', broadcastValue);
+                 StorageUtil.set('scrollSpeed', value);
                 break;
 
             case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
-                this._saveSetting('scrollMode', broadcastValue);
+                StorageUtil.set('scrollMode', value);
                 break;
 
             case CONFIG.UIActions.SET_TEXT_MODE:
-                this._saveSetting('textMode', broadcastValue);
+                StorageUtil.set('textMode', value);
                 break;
         }
 
