@@ -6,14 +6,6 @@
 // // Core Role:   Maintains references to all major systems and handles their interactions
 // // Dependencies: CONFIG, AudioManager, RainVisuals, TextDisplay, HUD, UIManager
 // //
-// // Design Notes:
-// // - Engine owns system creation and startup configuration.
-// // - Engine supplies configuration to the subsystem that owns the behavior.
-// // - Engine builds the initial UI state payload.
-// // - UIManager remains responsible for UI event routing and component broadcasting.
-// // - HUD owns its own auto-hide behavior.
-
-const MULTIPLYER = 100;
 
 class Engine
 {
@@ -24,7 +16,7 @@ class Engine
         this._loadSettingsFromStorage();
 
         // Now instantiate your core layers cleanly using your class properties
-        this.audio = new AudioManager(this.currentVolume / MULTIPLYER);
+        this.audio = new AudioManager(this.currentVolume / 100);
         this.textDisplayInstance = new TextDisplay();
         this.hud = new HUD(CONFIG.hud);
         this.visuals = new RainVisuals();
@@ -45,7 +37,7 @@ class Engine
     // SEPARATE STORAGE LOADER ───────────────────
     _loadSettingsFromStorage()
     {
-        this.activeTheme       = StorageUtil.get('colorTheme', Object.keys(CONFIG.colors)[0]); 
+        this.activeTheme       = StorageUtil.get('colorTheme', Object.keys(CONFIG.colors)); 
         this.activeMode        = StorageUtil.get('rainIntensity', CONFIG.intensitiesModes.RAIN);   
         this.currentMute        = StorageUtil.get('muteMode', false);                        
         this.currentScrollMode  = StorageUtil.get('scrollMode', false); 
@@ -62,9 +54,8 @@ class Engine
         if (this.visuals && typeof this.visuals.update === 'function') this.visuals.update(dt);
         if (this.hud && typeof this.hud.update === 'function') this.hud.update(dt);
     }
-
     // ── INITIAL SYSTEM START ───────────────────────────────────
-    start(intensityId, colorThemeId, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed)
+        start(intensityId, colorThemeId, currentMute, currentScrollMode, currentTextMode, currentVolume, currentScrollSpeed)
     {
         if (this.environment) this.environment.changeIntensity(intensityId);
         if (this.visuals && typeof this.visuals.setColor === 'function') this.visuals.setColor(colorThemeId);
@@ -82,11 +73,11 @@ class Engine
 
             if (typeof this.audio.setMasterVolume === 'function') 
             {
-                this.audio.setMasterVolume(currentVolume / MULTIPLYER);
+                this.audio.setMasterVolume(currentVolume / 100);
             } 
             else 
             {
-                this.audio.masterVolume = currentVolume / MULTIPLYER;
+                this.audio.masterVolume = currentVolume / 100;
             }
         }
 

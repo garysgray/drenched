@@ -1,15 +1,12 @@
 // ──────────────────────────────────────────────────────────────
 // ── CONFIG ────────────────────────────────────────────────────
 // ──────────────────────────────────────────────────────────────
-//
-// Description: Centralized configuration store for all magic numbers and
-// runtime constants. Ensures consistency across the project.
-// Core Role:   Single source of truth for all configurable values
-// Dependencies: None (base-level dependency for all other files)
+// Description: Centralized configuration store for all project settings,
+//              system parameters, and runtime constants.
+// Dependencies: None (base-level application dependency)
 
-// ── CONSTANTS ────────────────────────────────────────────────
-const UI_ACTIONS = Object.freeze(
-{
+// ── GLOBAL ENUMS ─────────────────────────────────────────────
+const UI_ACTIONS = Object.freeze({
   SET_SCROLL_SPEED:   0,
   SET_MASTER_VOLUME:  1,
   TOGGLE_MUTE:        2,
@@ -19,21 +16,40 @@ const UI_ACTIONS = Object.freeze(
   SET_TEXT_MODE:      6
 });
 
-const RAIN_INTENSITY_MODES = Object.freeze(
-{ 
+const STORAGE_KEYS = Object.freeze({
+  RAIN_INTENSITY: 'rainIntensity',
+  COLOR_THEME:    'colorTheme',
+  MASTER_VOLUME:  'masterVolume',
+  MUTE_MODE:      'muteMode',
+  SCROLL_SPEED:   'scrollSpeed',
+  SCROLL_MODE:    'scrollMode',
+  TEXT_MODE:      'textMode'
+});
+
+const RAIN_INTENSITY_MODES = Object.freeze({ 
   RAIN: 0, 
   STORM: 1, 
   TORRENT: 2 
 });
 
-// ── CONFIG DATA STRUCTURE ────────────────────────────────────
-const _configData = 
-{
+// ── ENGINE MATH & TIMING CONSTANTS ───────────────────────────
+// Grouped into a flat object to prevent global redeclared errors.
+const SHARED_SYSTEM_MATH = Object.freeze({
+  VOLUME_SCALE_FACTOR: 100,       // Replaces loose 'MULTIPLYER'
+  MS_PER_SECOND:       1000,      // Replaces loose 'SECONDS'
+  RGBA_CHANNELS:       4,         // Replaces loose 'RGBA_CHANNEL_COUNT'
+  NOISE_TEX_SIZE:      128,       // Replaces loose 'NOISE_TEXTURE_SIZE'
+  COLOR_CHANNEL_MAX:   255,
+  FIXED_TIMESTEP:      1 / 60,    // 60fps logic updates
+  MAX_FRAME_TIME:      0.25,      // Clamp lag spikes
+  MAX_STEPS:           5          // Prevent loop spiral of death
+});
+
+// ── INTERNAL CONFIGURATION DATA STRUCTURE ────────────────────
+const _configData = {
   // ── Intensity Presets ──────────────────────────────────────
-  intensities: Object.freeze(
-  {
-    [RAIN_INTENSITY_MODES.RAIN]: Object.freeze(
-    {
+  intensities: Object.freeze({
+    [RAIN_INTENSITY_MODES.RAIN]: Object.freeze({
       durAngled:   '1.3s',
       durStraight: '0.25s',
       durRev:      '1.3s',
@@ -43,9 +59,7 @@ const _configData =
       lightA:      '0.02',
       lightB:      '0.09',
     }),
-    
-    [RAIN_INTENSITY_MODES.STORM]: Object.freeze(
-    {
+    [RAIN_INTENSITY_MODES.STORM]: Object.freeze({
       durAngled:   '0.18s',
       durStraight: '0.22s',
       durRev:      '0.15s',
@@ -55,9 +69,7 @@ const _configData =
       lightA:      '0.65',
       lightB:      '0.35',
     }),
-
-    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze(
-    {
+    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({
       durAngled:   '0.045s',
       durStraight: '0.055s',
       durRev:      '0.038s',
@@ -70,16 +82,14 @@ const _configData =
   }),
 
   // ── Color Themes ──────────────────────────────────────────
-  colors: Object.freeze(
-  {
+  colors: Object.freeze({
     red:   Object.freeze({ color: '#cc0000', glow: 'rgba(200,0,0,0.75)',   cls: 'active-red' }),
     green: Object.freeze({ color: '#00bb00', glow: 'rgba(0,185,0,0.75)',   cls: 'active-green' }),
     blue:  Object.freeze({ color: '#2255ff', glow: 'rgba(30,85,255,0.75)', cls: 'active-blue' }),
   }),
 
   // ── Audio Constants ───────────────────────────────────────
-  audio: Object.freeze(
-  {
+  audio: Object.freeze({
     noiseBufferSecs:   2,
     rainFilterFreq:    1000,
     rainFilterQ:       0.5,
@@ -101,170 +111,129 @@ const _configData =
   }),
 
   // ── Weather System Dictionaries ────────────────────────────
-  rainLevels: Object.freeze(
-  {
+  rainLevels: Object.freeze({
     [RAIN_INTENSITY_MODES.RAIN]:    0.1, 
     [RAIN_INTENSITY_MODES.STORM]:   0.25, 
     [RAIN_INTENSITY_MODES.TORRENT]: 0.5 
   }),
 
-// ── THUNDER / LIGHTNING STRIKE CONFIGURATION ───────────────
-//
-// Every thunder event is treated as ONE complete strike.
-//
-// One scheduled strike produces:
-//   1. Lightning
-//   2. Font flash
-//   3. Thunder crack
-//   4. Thunder rumble
-//
-// The delay controls how long we wait before creating the NEXT
-// complete strike. The visual/audio settings control that strike.
-
-thunder: Object.freeze(
-{
-    [RAIN_INTENSITY_MODES.RAIN]: Object.freeze(
-    {
-        // Time between complete storm strikes
+  // ── Thunder / Lightning Strike Configurations ──────────────
+  thunder: Object.freeze({
+    [RAIN_INTENSITY_MODES.RAIN]: Object.freeze({
         minDelay: 15000,
         delayRange: 15000,
-
-        // Thunder
         crackVolume: 0.3,
         rumbleVolume: 0.25,
         rumbleLength: 2.5,
         fadeMin: 2.0,
         fadeMax: 1.0,
-
-        // Lightning + font flash
         lightningPeak: 0.3,
         flashAttack: 0.002,
         flashDecay: 0.12
     }),
-
-    [RAIN_INTENSITY_MODES.STORM]: Object.freeze(
-    {
-        // Time between complete storm strikes
+    [RAIN_INTENSITY_MODES.STORM]: Object.freeze({
         minDelay: 8000,
         delayRange: 8000,
-
-        // Thunder
         crackVolume: 0.8,
         rumbleVolume: 0.65,
         rumbleLength: 3.5,
         fadeMin: 3.0,
         fadeMax: 1.5,
-
-        // Lightning + font flash
         lightningPeak: 0.8,
         flashAttack: 0.002,
         flashDecay: 0.15
     }),
-
-    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze(
-    {
-        // Time between complete storm strikes
+    [RAIN_INTENSITY_MODES.TORRENT]: Object.freeze({
         minDelay: 3000,
         delayRange: 4000,
-
-        // Thunder
         crackVolume: 1.0,
         rumbleVolume: 1.0,
         rumbleLength: 5.0,
         fadeMin: 4.5,
         fadeMax: 2.0,
-
-        // Lightning + font flash
         lightningPeak: 1.0,
         flashAttack: 0.002,
         flashDecay: 0.18
     })
-}),
+  }),
 
-  rumbleLayers: Object.freeze(
-  { 
+  rumbleLayers: Object.freeze({ 
     [RAIN_INTENSITY_MODES.RAIN]:    1, 
     [RAIN_INTENSITY_MODES.STORM]:   2, 
     [RAIN_INTENSITY_MODES.TORRENT]: 3 
   }),
   
-  rumbleShelfGain: Object.freeze(
-  { 
+  rumbleShelfGain: Object.freeze({ 
     [RAIN_INTENSITY_MODES.RAIN]:    6, 
     [RAIN_INTENSITY_MODES.STORM]:   14, 
     [RAIN_INTENSITY_MODES.TORRENT]: 20 
   }),
   
-  rumbleHiCut: Object.freeze(
-  { 
+  rumbleHiCut: Object.freeze({ 
     [RAIN_INTENSITY_MODES.RAIN]:    300, 
     [RAIN_INTENSITY_MODES.STORM]:   600, 
     [RAIN_INTENSITY_MODES.TORRENT]: 1200 
   }),
 
-  // ── UI Configuration ──────────────────────────────────────
-  hud: Object.freeze(
-  {
+  hud: Object.freeze({
     autoHideMs:    3000,
     transitionCss: 'opacity 0.6s ease, transform 0.6s ease',
   }),
 
-  scroll: Object.freeze(
-  {
+  scroll: Object.freeze({
     defaultSpeedSecs: 40,
     minSpeedSecs:     5,
     maxSpeedSecs:     40,
   }),
 
-  // ── Visual Effects ────────────────────────────────────────
-  grain: Object.freeze(
-  {
+  grain: Object.freeze({
     alpha: 18,
   }),
 
-  // ── Content ───────────────────────────────────────────────
-  text: Object.freeze(
-  {
+  text: Object.freeze({
     content: "It was a Dark and Stormy Night!!!",
   }),
-
 };
 
 // ── PUBLIC CONFIG INTERFACE ─────────────────────────────────
-const CONFIG = 
-{
-  // Immutable property accessors
-  get UIActions() { return UI_ACTIONS; },
-  get intensitiesModes() { return RAIN_INTENSITY_MODES; },
-  get intensities() { return _configData.intensities; }, 
-  get colors() { return _configData.colors; },
-  get audio() { return _configData.audio; },
-  get rainLevels() { return _configData.rainLevels; },
-  get thunder() { return _configData.thunder; },
-  get rumbleLayers() { return _configData.rumbleLayers; },
-  get rumbleShelfGain() { return _configData.rumbleShelfGain; },
-  get rumbleHiCut() { return _configData.rumbleHiCut; },
-  get hud() { return _configData.hud; },
-  get scroll() { return _configData.scroll; },
-  get grain() { return _configData.grain; },
-  get text() { return _configData.text; },
+const CONFIG = {
+  // 1. Math and Global Enums (Direct mapping, no proxies)
+  System:           SHARED_SYSTEM_MATH,
+  UIActions:        UI_ACTIONS,
+  StorageKeys:      STORAGE_KEYS,
+  intensitiesModes: RAIN_INTENSITY_MODES,
+
+  // 2. Static Configurations (Direct structural access)
+  intensities:     _configData.intensities, 
+  colors:          _configData.colors, 
+  audio:           _configData.audio, 
+  rainLevels:      _configData.rainLevels, 
+  thunder:         _configData.thunder, 
+  rumbleLayers:    _configData.rumbleLayers, 
+  rumbleShelfGain: _configData.rumbleShelfGain, 
+  rumbleHiCut:     _configData.rumbleHiCut, 
+  hud:             _configData.hud, 
+  scroll:          _configData.scroll, 
+  grain:           _configData.grain, 
+  text:            _configData.text, 
   
-  // Mutable properties
-  _masterVolume: 100,
+  // 3. Runtime State Properties with business logic validation
+  _masterVolume: 1.0,
   get masterVolume() { return this._masterVolume; },
-  set masterVolume(value) 
-  {
-    if (value >= 0 && value <= 1) this._masterVolume = value;
-    else console.error('Volume must be between 0 and 1');
+  set masterVolume(value) {
+    if (value >= 0 && value <= 1) {
+      this._masterVolume = value;
+    } else {
+      console.error('Volume must be a normalized value between 0 and 1');
+    }
   },
 };
 
-// Freeze the CONFIG object to prevent modifications
+// Freeze the interface root
 Object.freeze(CONFIG);
 
-
+// ── UTILITY STORAGE WRAPPER ──────────────────────────────────
 const StorageUtil = {
-    // ── READ A SETTING FROM STORAGE ──────────────────────────
     get(key, fallbackValue) {
         try {
             const savedData = localStorage.getItem("siteSettings");
@@ -277,17 +246,15 @@ const StorageUtil = {
         } catch (e) {
             console.error(`StorageUtil: Failed to read key "${key}"`, e);
         }
-        return fallbackValue; // Return default if nothing is found
+        return fallbackValue;
     },
 
-    // ── WRITE A SETTING TO STORAGE ───────────────────────────
     set(key, value) {
         try {
             const savedData = localStorage.getItem("siteSettings");
             const currentSettings = savedData ? JSON.parse(savedData) : {};
             
             currentSettings[key] = value;
-            
             localStorage.setItem("siteSettings", JSON.stringify(currentSettings));
         } catch (e) {
             console.error(`StorageUtil: Failed to save key "${key}"`, e);

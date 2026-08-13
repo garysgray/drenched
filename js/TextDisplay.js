@@ -126,7 +126,7 @@ class TextDisplay extends UIComponent
         this.scrollText
         ];
 
-        console.log('[TEXT] FONT FLASH', { attack: attackSecs, decay: decaySecs, overshoot: deltaOvershoot });
+        //console.log('[TEXT] FONT FLASH', { attack: attackSecs, decay: decaySecs, overshoot: deltaOvershoot });
 
         for (const el of this.activeTargets)
         {
@@ -167,7 +167,7 @@ class TextDisplay extends UIComponent
                 if (el) el.dataset.flash = 'inactive';
             }
 
-            console.log('[TEXT] FONT FLASH COMPLETE VIA DELTA HEARTBEAT');
+            //console.log('[TEXT] FONT FLASH COMPLETE VIA DELTA HEARTBEAT');
 
             // Reset the state machine back to idle
             this.isFlashing = false;

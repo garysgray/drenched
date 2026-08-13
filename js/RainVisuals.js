@@ -38,7 +38,7 @@ class RainVisuals
   // Helper method to generate a texture canvas for a given alpha value
   _createTexture(alpha)
   {
-    const size = 128; // Locked small tile size for CSS repeating background
+    const size = CONFIG.System.NOISE_TEX_SIZE; // Locked small tile size for CSS repeating background
     const texCanvas = document.createElement('canvas');
     texCanvas.width = size;
     texCanvas.height = size;
@@ -47,9 +47,9 @@ class RainVisuals
     const imageData = texCtx.createImageData(size, size);
     const data = imageData.data;
 
-    for (let i = 0; i < data.length; i += 4)
+    for (let i = 0; i < data.length; i += CONFIG.System.RGBA_CHANNELS)
     {
-      const v = Math.random() * 255;
+      const v = Math.random() * CONFIG.System.COLOR_CHANNEL_MAX;
       data[i] = v;
       data[i + 1] = v;
       data[i + 2] = v;
@@ -63,7 +63,7 @@ class RainVisuals
   // ── FILM GRAIN RENDERING ───────────────────────────────────────
   _initGrain() 
   {
-    var tileCanvas = this.createNoiseTexture(128, 128, CONFIG.grain.alpha);
+    var tileCanvas = this.createNoiseTexture(CONFIG.System.NOISE_TEX_SIZE, CONFIG.System.NOISE_TEX_SIZE, CONFIG.grain.alpha);
     var grainDataUrl = tileCanvas.toDataURL();
     var noiseOverlay = document.getElementById('noise');
     if (noiseOverlay) noiseOverlay.style.backgroundImage = 'url(' + grainDataUrl + ')';
@@ -124,9 +124,9 @@ class RainVisuals
     var ctx = canvas.getContext('2d');
     var imageData = ctx.createImageData(width, height);
     var data = imageData.data;
-    for (var i = 0; i < data.length; i += 4) 
+    for (var i = 0; i < data.length; i += CONFIG.System.RGBA_CHANNELS) 
     {
-        var v = Math.random() * 255;
+        var v = Math.random() * CONFIG.System.COLOR_CHANNEL_MAX;
         data[i] = data[i + 1] = data[i + 2] = v;
         data[i + 3] = alpha;
     }
@@ -146,7 +146,7 @@ class RainVisuals
       this.lightning.style.setProperty('--lightning-decay', `${decaySecs}s`);
       this.lightning.style.setProperty('--lightning-peak', String(Math.min(1, lightningPeak)));
 
-      console.log('[LIGHTNING] FLASH USING DELTA', {peak: lightningPeak, attack: attackSecs ,decay: decaySecs, overshoot: deltaOvershoot});
+      //console.log('[LIGHTNING] FLASH USING DELTA', {peak: lightningPeak, attack: attackSecs ,decay: decaySecs, overshoot: deltaOvershoot});
 
       // Trigger the lightning flash.
       this.lightning.dataset.flash = 'active';
@@ -178,7 +178,7 @@ class RainVisuals
               this.lightning.dataset.flash = 'inactive';
           }
 
-          console.log('[LIGHTNING] FLASH COMPLETE VIA DELTA HEARTBEAT');
+          //console.log('[LIGHTNING] FLASH COMPLETE VIA DELTA HEARTBEAT');
           
           // Reset the state machine back to idle
           this.isFlashing = false;

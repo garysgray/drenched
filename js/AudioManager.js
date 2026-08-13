@@ -25,7 +25,7 @@ class AudioManager
       {
         if (this.ctx.state === 'running') 
         {
-          console.log("AudioManager: Audio pipeline unlocked by user gesture. Synthesizers online.");
+          console.log("AudioManager: Audio pipeline unlocked by user gesture.");
         }
       };
     }

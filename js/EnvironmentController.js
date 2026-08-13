@@ -97,12 +97,12 @@ class EnvironmentController
         }
 
         // Convert the random millisecond delay safely into pure SECONDS
-        const delayInSeconds = (cfg.minDelay + Math.random() * cfg.delayRange) / 1000;
+        const delayInSeconds = (cfg.minDelay + Math.random() * cfg.delayRange) / CONFIG.System.MS_PER_SECOND;
 
         // Set the hard frame deadline countdown slider
         this.strikeCountdown = delayInSeconds;
 
-        console.log('[STORM] Next strike scheduled via delta frame tracker in', `${delayInSeconds.toFixed(2)} seconds`);
+       // console.log('[STORM] Next strike scheduled via delta frame tracker in', `${delayInSeconds.toFixed(2)} seconds`);
     }
 
     // ── COMPLETE STORM STRIKE EXECUTION ────────────────────────
@@ -126,18 +126,18 @@ class EnvironmentController
 
         const payload = { crack: cfg.crackVolume, lightningPeak: cfg.lightningPeak, attackSecs: cfg.flashAttack, decaySecs: cfg.flashDecay };
 
-        console.log(
-            '[STORM] STRIKE PULSE',
-            {
-                intensity,
-                deltaOvershoot: `${deltaOvershoot.toFixed(3)}s`,
-                lightningPeak: cfg.lightningPeak,
-                flashAttack: cfg.flashAttack,
-                flashDecay: cfg.flashDecay,
-                crackVolume: cfg.crackVolume,
-                rumbleVolume: cfg.rumbleVolume
-            }
-        );
+        // console.log(
+        //     '[STORM] STRIKE PULSE',
+        //     {
+        //         intensity,
+        //         deltaOvershoot: `${deltaOvershoot.toFixed(3)}s`,
+        //         lightningPeak: cfg.lightningPeak,
+        //         flashAttack: cfg.flashAttack,
+        //         flashDecay: cfg.flashDecay,
+        //         crackVolume: cfg.crackVolume,
+        //         rumbleVolume: cfg.rumbleVolume
+        //     }
+        // );
 
         // Forward deltaOvershoot straight into your visual controllers
         if (this.visuals && typeof this.visuals.flashLightning === 'function')

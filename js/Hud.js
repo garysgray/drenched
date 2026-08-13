@@ -204,7 +204,7 @@ class HUD extends UIComponent
 
         // ── THE TIMING FIX ─────────────────────────────────────
         // Convert your configured milliseconds safely into pure SECONDS
-        const autoHideSeconds = this._autoHideSettings.autoHideMs / 1000;
+        const autoHideSeconds = this._autoHideSettings.autoHideMs / CONFIG.System.MS_PER_SECOND;
 
         // Seed the active countdown deadline
         this.hudIdleCountdown = autoHideSeconds;

@@ -18,11 +18,6 @@
 let lastTime = performance.now();
 let accumulator = 0;
 
-// Loop constraints
-const FIXED_TIMESTEP = 1 / 60;    // 60fps logic updates
-const MAX_FRAME_TIME = 0.25;      // Clamp lag spikes
-const MAX_STEPS      = 5;         // Prevent spiral of death
-
 document.addEventListener('DOMContentLoaded', () => 
 {
     // Create the clean Engine instance
@@ -48,21 +43,21 @@ function gameLoop()
         if (!window.engine) return;
 
         const now = performance.now();
-        const frameTime = Math.min((now - lastTime) / 1000, MAX_FRAME_TIME);
+        const frameTime = Math.min((now - lastTime) / CONFIG.System.MS_PER_SECOND, CONFIG.System.MAX_FRAME_TIME);
         lastTime = now;
         accumulator += frameTime;
 
         let steps = 0;
-        while (accumulator >= FIXED_TIMESTEP && steps < MAX_STEPS)
+        while (accumulator >= CONFIG.System.FIXED_TIMESTEP && steps < CONFIG.System.MAX_STEPS)
         {
             // PASS DELTA TO THE ENGINE
-            window.engine.update(FIXED_TIMESTEP);
+            window.engine.update(CONFIG.System.FIXED_TIMESTEP);
             
-            accumulator -= FIXED_TIMESTEP;
+            accumulator -= CONFIG.System.FIXED_TIMESTEP;
             steps++;
         }
 
-        if (steps >= MAX_STEPS) 
+        if (steps >= CONFIG.System.MAX_STEPS) 
         {
             accumulator = 0;
         }
