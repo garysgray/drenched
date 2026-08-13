@@ -1,4 +1,29 @@
 /* ── Responsive ─────────────────────────────────────────────── */
+
+/* 1. TABLET / MID RANGE VIEWPORT TRANSITION */
+@media (max-width: 1024px) {
+  .HUD {
+    gap: 8px; /* Slightly tighter spacing for laptops and tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .HUD {
+    flex-wrap: wrap; /* Allows buttons to squeeze horizontally and wrap into a second neat row before collapsing */
+    justify-content: center;
+    gap: 8px;
+    padding: var(--btn-pad-mobile);
+    width: calc(100vw - 32px);
+  }
+
+  .control-group {
+    flex: 1 1 auto; /* Squeezes groups down fluidly to fit tablet width */
+    min-width: 140px;
+    justify-content: center;
+  }
+}
+
+/* 2. YOUR ORIGINAL PHONE CODE (Kept 100% intact) */
 @media (max-width: 640px) {
   .HUD {
     flex-direction: column;
