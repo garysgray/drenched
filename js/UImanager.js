@@ -57,27 +57,30 @@ class UIManager
             throw new TypeError(`UIManager: Component "${name}" getEventMaps() must return an array.`);
         }
 
-        eventMaps.forEach(({ elementId, eventType, actionType, actionValue }) =>
+                eventMaps.forEach(({ elementId, eventType, actionType, actionValue }) =>
         {
             const element = document.getElementById(elementId);
 
             if (!element)
             {
-                // Missing DOM elements should not crash the entire UI.
                 console.warn(`UIManager: Element "${elementId}" not found for component "${name}".`);
                 return;
             }
 
-            // Save a named reference wrapper for this specific element handler
-            const handler = () =>
+            // Updated handler to intercept empty container clicks
+            const handler = (event) =>
             {
+                // If clicking the giant dynamic text container, ensure they hit the text itself, not empty space
+                if (elementId === 'dynamic-scroll-text' && event.target === element)
+                {
+                    return; // Ignore background click completely
+                }
+
                 if (this.engines.audio && typeof this.engines.audio.play === 'function')
                 {
                     this.engines.audio.play('ui_click');
                 }
 
-                // Range controls use their current value.
-                // Buttons and other controls use their configured action value.
                 const finalValue = (element.type === 'range')
                     ? parseFloat(element.value)
                     : actionValue;
@@ -85,84 +88,85 @@ class UIManager
                 this._handleComponentAction(actionType, finalValue);
             };
 
+            // Pass the event object to the handler
             element.addEventListener(eventType, handler);
 
-            // Store it so destroy() can scrub it later
             this._registeredListeners.push({ element, eventType, handler });
         });
+
     }
 
     // ── ACTION ROUTING ─────────────────────────────────────────
     _handleComponentAction(actionType, value)
-{
-    // Local value used when an engine returns a state that must be
-    // broadcast to all UI components. Mute is the current example.
-    let broadcastValue = value;
-
-    // Explicit action routing is intentional.
-    // UIManager is the mediator, so it knows which engine owns each action.
-    // This is safer than blindly sending every action to every engine.
-
-    switch (actionType)
     {
-        case CONFIG.UIActions.SET_RAIN_INTENSITY:
-            if (this.engines.environment && typeof this.engines.environment.changeIntensity === 'function')
-            {
-                this.engines.environment.changeIntensity(value);
-            }
-            StorageUtil.set(CONFIG.StorageKeys.RAIN_INTENSITY, value);
-            break;
+        // Local value used when an engine returns a state that must be
+        // broadcast to all UI components. Mute is the current example.
+        let broadcastValue = value;
 
-        case CONFIG.UIActions.SET_COLOR:
-            if (this.engines.visuals && typeof this.engines.visuals.setColor === 'function')
-            {
-                this.engines.visuals.setColor(value);
-            }
-            StorageUtil.set(CONFIG.StorageKeys.COLOR_THEME, value);
-            break;
+        // Explicit action routing is intentional.
+        // UIManager is the mediator, so it knows which engine owns each action.
+        // This is safer than blindly sending every action to every engine.
 
-        case CONFIG.UIActions.SET_MASTER_VOLUME:
-            if (this.engines.audio && typeof this.engines.audio.setMasterVolume === 'function')
-            {
-                // UI slider uses 0-100.
-                // AudioManager expects 0.0-1.0.
-                this.engines.audio.setMasterVolume(value / CONFIG.System.VOLUME_SCALE_FACTOR);
-            }
-            else if (this.engines.audio)
-            {
-                this.engines.audio.masterVolume = value / CONFIG.System.VOLUME_SCALE_FACTOR;
-            }
-            StorageUtil.set(CONFIG.StorageKeys.MASTER_VOLUME, value);
-            break;
-
-        case CONFIG.UIActions.TOGGLE_MUTE:
-            if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function')
-            {
-                broadcastValue = this.engines.audio.toggleMute();
-            }
-            StorageUtil.set(CONFIG.StorageKeys.MUTE_MODE, broadcastValue);
-            break;
-
-        case CONFIG.UIActions.SET_SCROLL_SPEED:
-            StorageUtil.set(CONFIG.StorageKeys.SCROLL_SPEED, value);
-            break;
-
-        case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
-            StorageUtil.set(CONFIG.StorageKeys.SCROLL_MODE, value);
-            break;
-
-        case CONFIG.UIActions.SET_TEXT_MODE:
-            StorageUtil.set(CONFIG.StorageKeys.TEXT_MODE, value);
-            break;
-    }
-
-        // Broadcast the resulting state to ALL registered UI components.
-        // Each component decides whether the action affects its own visual state.
-        this.components.forEach((component) =>
+        switch (actionType)
         {
-            component.updateVisualState(actionType, broadcastValue);
-        });
-    }
+            case CONFIG.UIActions.SET_RAIN_INTENSITY:
+                if (this.engines.environment && typeof this.engines.environment.changeIntensity === 'function')
+                {
+                    this.engines.environment.changeIntensity(value);
+                }
+                StorageUtil.set(CONFIG.StorageKeys.RAIN_INTENSITY, value);
+                break;
+
+            case CONFIG.UIActions.SET_COLOR:
+                if (this.engines.visuals && typeof this.engines.visuals.setColor === 'function')
+                {
+                    this.engines.visuals.setColor(value);
+                }
+                StorageUtil.set(CONFIG.StorageKeys.COLOR_THEME, value);
+                break;
+
+            case CONFIG.UIActions.SET_MASTER_VOLUME:
+                if (this.engines.audio && typeof this.engines.audio.setMasterVolume === 'function')
+                {
+                    // UI slider uses 0-100.
+                    // AudioManager expects 0.0-1.0.
+                    this.engines.audio.setMasterVolume(value / CONFIG.System.VOLUME_SCALE_FACTOR);
+                }
+                else if (this.engines.audio)
+                {
+                    this.engines.audio.masterVolume = value / CONFIG.System.VOLUME_SCALE_FACTOR;
+                }
+                StorageUtil.set(CONFIG.StorageKeys.MASTER_VOLUME, value);
+                break;
+
+            case CONFIG.UIActions.TOGGLE_MUTE:
+                if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function')
+                {
+                    broadcastValue = this.engines.audio.toggleMute();
+                }
+                StorageUtil.set(CONFIG.StorageKeys.MUTE_MODE, broadcastValue);
+                break;
+
+            case CONFIG.UIActions.SET_SCROLL_SPEED:
+                StorageUtil.set(CONFIG.StorageKeys.SCROLL_SPEED, value);
+                break;
+
+            case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
+                StorageUtil.set(CONFIG.StorageKeys.SCROLL_MODE, value);
+                break;
+
+            case CONFIG.UIActions.SET_TEXT_MODE:
+                StorageUtil.set(CONFIG.StorageKeys.TEXT_MODE, value);
+                break;
+        }
+
+            // Broadcast the resulting state to ALL registered UI components.
+            // Each component decides whether the action affects its own visual state.
+            this.components.forEach((component) =>
+            {
+                component.updateVisualState(actionType, broadcastValue);
+            });
+        }
 
     // ── INITIAL UI STATE ───────────────────────────────────────
     // Receives a data-driven list of initial states from Engine.

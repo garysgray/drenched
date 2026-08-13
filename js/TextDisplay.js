@@ -206,23 +206,23 @@ class TextDisplay extends UIComponent
 
     createAndAppendElement(parentSelector, tagName, attrs, text) 
     {
-    var parent = document.querySelector(parentSelector);
-    if (!parent) {
-        console.warn('DOMUtil: Parent not found for selector:', parentSelector);
-        return null;
-    }
-    var el = document.createElement(tagName);
-    if (attrs) {
-        for (var key in attrs) {
-            if (attrs.hasOwnProperty(key)) {
-                el[key] = attrs[key];
+        var parent = document.querySelector(parentSelector);
+        if (!parent) {
+            console.warn('DOMUtil: Parent not found for selector:', parentSelector);
+            return null;
+        }
+        var el = document.createElement(tagName);
+        if (attrs) {
+            for (var key in attrs) {
+                if (attrs.hasOwnProperty(key)) {
+                    el[key] = attrs[key];
+                }
             }
         }
+        if (text) el.textContent = text;
+        parent.appendChild(el);
+        return el;
     }
-    if (text) el.textContent = text;
-    parent.appendChild(el);
-    return el;
-}
 
     // ── SCROLL SPEED ──────────────────────────────────────────
     // Adjusts the CSS marquee scroll timeline duration whenever the UI slider changes.

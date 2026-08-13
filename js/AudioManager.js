@@ -290,10 +290,18 @@ class AudioManager
   {
     if (this.ctx && typeof this.ctx.resume === 'function') 
     {
-      return this.ctx.resume();
+      return this.ctx.resume().then(() => {
+        // Enforce the saved mute state on the hardware node immediately after resuming
+        const targetVolume = this.muted ? 0 : this._masterVolume;
+        if (this.masterGain) 
+        {
+          this.masterGain.gain.setValueAtTime(targetVolume, this.ctx.currentTime);
+        }
+      });
     }
     return Promise.resolve();
   }
+
 
   // ── MASTER TEARDOWN PIPELINE ────────────────────────────────
   stopAll()

@@ -28,7 +28,8 @@ class Engine
         this.ui.registerComponent('text_display', this.textDisplayInstance);
 
         // Handle browser audio autoplay restrictions
-        document.addEventListener('click', () => this.audio.resume(), { once: true });
+        //document.addEventListener('click', () => this.audio.resume(), { once: true });
+        document.addEventListener('click', () => { this.audio.muted = this.currentMute; this.audio.resume(); }, { once: true });
 
         // Trigger system startup sequence passing the assigned instance values
         this.start(this.activeMode, this.activeTheme, this.currentMute, this.currentScrollMode, this.currentTextMode, this.currentVolume, this.currentScrollSpeed);
