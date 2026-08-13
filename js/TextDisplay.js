@@ -15,39 +15,51 @@
 
 class TextDisplay extends UIComponent
 {
+    // ── PRIVATE PROPERTIES ──────────────────────────────────────
+    #stage;
+    #textWrap;
+    #mainText;
+    #shadowText;
+    #scrollEl;
+    #scrollText;
+    #isScrolling = false;
+    #flashTimeRemaining = 0;
+    #isFlashing = false;
+    #activeTargets = [];
+
     // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor()
     {
         super();
 
         // Cache DOM references
-        this.stage = document.querySelector('.text-stage');
-        this.textWrap = document.querySelector('#text-toggle');
-        this.mainText = document.querySelector('.main-text');
-        this.shadowText = document.querySelector('.shadow-text');
+        this.#stage = document.querySelector('.text-stage');
+        this.#textWrap = document.querySelector('#text-toggle');
+        this.#mainText = document.querySelector('.main-text');
+        this.#shadowText = document.querySelector('.shadow-text');
 
         // State tracking
-        this.isScrolling = false;
-        this.flashTimeRemaining = 0;
-        this.isFlashing = false;
-        this.activeTargets = [];
+        this.#isScrolling = false;
+        this.#flashTimeRemaining = 0;
+        this.#isFlashing = false;
+        this.#activeTargets = [];
 
         // Initialize text content from central config via textContent. textContent keeps the operation safe 
         // because it treats the configured text as text rather than executable HTML.
         const textAsset = CONFIG.text.content;
 
-        if (this.mainText)
+        if (this.#mainText)
         {
-            this.mainText.textContent = textAsset;
+            this.#mainText.textContent = textAsset;
         }
 
-        if (this.shadowText)
+        if (this.#shadowText)
         {
-            this.shadowText.textContent = textAsset;
+            this.#shadowText.textContent = textAsset;
         }
 
         // Create the outer scrolling div container using our utility
-        this.scrollEl = this.createAndAppendElement('.text-stage', 'div', 
+        this.#scrollEl = this.#createAndAppendElement('.text-stage', 'div', 
         {
             id: 'dynamic-scroll-text',
             className: 'scroll-left',
@@ -55,17 +67,29 @@ class TextDisplay extends UIComponent
         });
 
         // Create inner paragraph element inside the container safely
-        if (this.scrollEl)
+        if (this.#scrollEl)
         {
-            this.scrollText = this.createAndAppendElement('#dynamic-scroll-text', 'p', {}, textAsset);
+            this.#scrollText = this.#createAndAppendElement('#dynamic-scroll-text', 'p', {}, textAsset);
         }
 
         // Set initial display state
-        if (this.stage)
+        if (this.#stage)
         {
-            this.stage.classList.remove('scrolling');
+            this.#stage.classList.remove('scrolling');
         }
     }
+
+    // ── PUBLIC ACCESSORS ────────────────────────────────────────
+    get stage() { return this.#stage; }
+    get textWrap() { return this.#textWrap; }
+    get mainText() { return this.#mainText; }
+    get shadowText() { return this.#shadowText; }
+    get scrollEl() { return this.#scrollEl; }
+    get scrollText() { return this.#scrollText; }
+    get isScrolling() { return this.#isScrolling; }
+    get flashTimeRemaining() { return this.#flashTimeRemaining; }
+    get isFlashing() { return this.#isFlashing; }
+    get activeTargets() { return this.#activeTargets; }
 
     // TextDisplay only reacts to actions that belong to text behavior. Other actions are intentionally ignored.
     updateVisualState(actionType, value)
@@ -120,15 +144,15 @@ class TextDisplay extends UIComponent
     // The timing values are supplied by the environment system so TextDisplay does not need to know how the weather timing works.
     flashFont({ attackSecs, decaySecs }, deltaOvershoot = 0)
     {
-        this.activeTargets = [
-        this.mainText,
-        this.shadowText,
-        this.scrollText
+        this.#activeTargets = [
+        this.#mainText,
+        this.#shadowText,
+        this.#scrollText
         ];
 
         //console.log('[TEXT] FONT FLASH', { attack: attackSecs, decay: decaySecs, overshoot: deltaOvershoot });
 
-        for (const el of this.activeTargets)
+        for (const el of this.#activeTargets)
         {
             if (!el) continue;
 
@@ -145,24 +169,24 @@ class TextDisplay extends UIComponent
 
         // Subtract the loop's delta overshoot so the text timeline 
         // matches the audio timeline perfectly
-        this.flashTimeRemaining = totalLifespan - deltaOvershoot;
-        this.isFlashing = true;
+        this.#flashTimeRemaining = totalLifespan - deltaOvershoot;
+        this.#isFlashing = true;
     }
 
     // ── MASTER TEXT HEARTBEAT TICK ────────────────────────────
     // Driven 60 times a second by your Engine.js game loop
     update(dt)
     {
-        if (!this.isFlashing) return;
+        if (!this.#isFlashing) return;
 
         // Tick down the countdown by the fixed frame step (1/60)
-        this.flashTimeRemaining -= dt;
+        this.#flashTimeRemaining -= dt;
 
-        if (this.flashTimeRemaining <= 0)
+        if (this.#flashTimeRemaining <= 0)
         {
             // The animation time has officially expired on this exact loop tick!
             // Clean up the DOM states safely
-            for (const el of this.activeTargets)
+            for (const el of this.#activeTargets)
             {
                 if (el) el.dataset.flash = 'inactive';
             }
@@ -170,41 +194,41 @@ class TextDisplay extends UIComponent
             //console.log('[TEXT] FONT FLASH COMPLETE VIA DELTA HEARTBEAT');
 
             // Reset the state machine back to idle
-            this.isFlashing = false;
-            this.flashTimeRemaining = 0;
-            this.activeTargets = [];
+            this.#isFlashing = false;
+            this.#flashTimeRemaining = 0;
+            this.#activeTargets = [];
         }
     }
-
+    
     // ── SCROLL CLICK CONNECTOR ────────────────────────────────
     // Allows another system to attach a callback to the dynamically created scrolling text element.
     bindScrollElementClick(callbackFunction)
     {
-        if (this.scrollEl && typeof callbackFunction === 'function')
+        if (this.#scrollEl && typeof callbackFunction === 'function')
         {
-            this.addListener(this.scrollEl, 'click', callbackFunction);
+            this.addListener(this.#scrollEl, 'click', callbackFunction);
         }
     }
 
     // Flips the active scrolling state back and forth.
     toggleScrollMode()
     {
-        this.forceSetMode(!this.isScrolling);
+        this.forceSetMode(!this.#isScrolling);
     }
 
     // ── SCROLL MODE SETTER ────────────────────────────────────
     // Forcefully switches the layout to a specific mode.
     forceSetMode(scrolling)
     {
-        this.isScrolling = Boolean(scrolling);
+        this.#isScrolling = Boolean(scrolling);
 
-        if (this.stage)
+        if (this.#stage)
         {
-            this.stage.classList.toggle('scrolling' ,this.isScrolling);
+            this.#stage.classList.toggle('scrolling' ,this.#isScrolling);
         }
     }
 
-    createAndAppendElement(parentSelector, tagName, attrs, text) 
+    #createAndAppendElement(parentSelector, tagName, attrs, text) 
     {
         var parent = document.querySelector(parentSelector);
         if (!parent) {
@@ -228,9 +252,9 @@ class TextDisplay extends UIComponent
     // Adjusts the CSS marquee scroll timeline duration whenever the UI slider changes.
     updateAnimationSpeed(seconds)
     {
-        if (this.scrollText)
+        if (this.#scrollText)
         {
-            this.scrollText.style.animationDuration = `${seconds}s`;
+            this.#scrollText.style.animationDuration = `${seconds}s`;
         }
     }
 
@@ -245,12 +269,11 @@ class TextDisplay extends UIComponent
         super.destroy();
 
         // Remove the dynamically created scrolling element from the DOM.
-        if (this.scrollEl && this.scrollEl.parentNode)
+        if (this.#scrollEl && this.#scrollEl.parentNode)
         {
-            this.scrollEl.parentNode.removeChild(this.scrollEl);
+            this.#scrollEl.parentNode.removeChild(this.#scrollEl);
         }
 
         console.log("TextDisplay: Active animations, listeners, and dynamic elements destroyed safely.");
     }
 }
-

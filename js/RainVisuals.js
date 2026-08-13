@@ -8,60 +8,66 @@
 
 class RainVisuals
 {
-  // ── CONSTRUCTOR ────────────────────────────────────────────
-  constructor()
-  {
-    // Cache root element for CSS variable access
-    this.root = document.documentElement;
+    // ── PRIVATE PROPERTIES ──────────────────────────────────────
+    #root;
+    #rainAngled;
+    #rainStraight;
+    #rainRev;
+    #lightning;
+    #flashTimeRemaining = 0;
+    #isFlashing = false;
 
-    // Reference visual layer elements
-    this.rainAngled   = document.getElementById('rain-angled');
-    this.rainStraight = document.getElementById('rain-straight');
-    this.rainRev      = document.getElementById('rain-rev');
-    this.lightning    = document.getElementById('lightning');
-    
-    // Validate required elements exist
-    if (!this.rainAngled || !this.rainStraight || !this.rainRev || !this.lightning) 
+    // ── CONSTRUCTOR ────────────────────────────────────────────
+    constructor()
     {
-      console.error('Required DOM elements not found');
-      return;
-    }
-    
-    // Effect timers
-    this.flashTimeRemaining = 0;
-    this.isFlashing = false;
-    
-    // Initialize film grain effect
-    this._initGrain();
-  }
+      // Cache root element for CSS variable access
+      this.#root = document.documentElement;
 
-  // Helper method to generate a texture canvas for a given alpha value
-  _createTexture(alpha)
-  {
-    const size = CONFIG.System.NOISE_TEX_SIZE; // Locked small tile size for CSS repeating background
-    const texCanvas = document.createElement('canvas');
-    texCanvas.width = size;
-    texCanvas.height = size;
-    const texCtx = texCanvas.getContext('2d');
-
-    const imageData = texCtx.createImageData(size, size);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += CONFIG.System.RGBA_CHANNELS)
-    {
-      const v = Math.random() * CONFIG.System.COLOR_CHANNEL_MAX;
-      data[i] = v;
-      data[i + 1] = v;
-      data[i + 2] = v;
-      data[i + 3] = alpha;
+      // Reference visual layer elements
+      this.#rainAngled   = document.getElementById('rain-angled');
+      this.#rainStraight = document.getElementById('rain-straight');
+      this.#rainRev      = document.getElementById('rain-rev');
+      this.#lightning    = document.getElementById('lightning');
+      
+      // Validate required elements exist
+      if (!this.#rainAngled || !this.#rainStraight || !this.#rainRev || !this.#lightning) 
+      {
+        console.error('Required DOM elements not found');
+        return;
+      }
+      
+      // Effect timers
+      this.#flashTimeRemaining = 0;
+      this.#isFlashing = false;
+      
+      // Initialize film grain effect
+      this.#initGrain();
     }
 
-    texCtx.putImageData(imageData, 0, 0);
-    return texCanvas;
-  }
+    // ── PUBLIC GETTERS AND SETTERS ──────────────────────────────
+    get root() { return this.#root; }
+    set root(val) { this.#root = val; }
+
+    get rainAngled() { return this.#rainAngled; }
+    set rainAngled(val) { this.#rainAngled = val; }
+
+    get rainStraight() { return this.#rainStraight; }
+    set rainStraight(val) { this.#rainStraight = val; }
+
+    get rainRev() { return this.#rainRev; }
+    set rainRev(val) { this.#rainRev = val; }
+
+    get lightning() { return this.#lightning; }
+    set lightning(val) { this.#lightning = val; }
+
+    get flashTimeRemaining() { return this.#flashTimeRemaining; }
+    set flashTimeRemaining(val) { this.#flashTimeRemaining = val; }
+
+    get isFlashing() { return this.#isFlashing; }
+    set isFlashing(val) { this.#isFlashing = val; }
 
   // ── FILM GRAIN RENDERING ───────────────────────────────────────
-  _initGrain() 
+  #initGrain() 
   {
     var tileCanvas = this.createNoiseTexture(CONFIG.System.NOISE_TEX_SIZE, CONFIG.System.NOISE_TEX_SIZE, CONFIG.grain.alpha);
     var grainDataUrl = tileCanvas.toDataURL();

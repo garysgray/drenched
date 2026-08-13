@@ -17,18 +17,34 @@
 
 class UIManager
 {
+      // ── PRIVATE PROPERTIES ──────────────────────────────────────
+    #engines;
+    #components;
+    #registeredListeners;
+
     // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor(audio, visuals, environment)
     {
         // Reference core engine systems
-        this.engines = { audio, visuals, environment };
+        this.#engines = { audio, visuals, environment };
 
         // Component registry
-        this.components = new Map();
+        this.#components = new Map();
 
         // Track element listeners so we can unbind them during teardown
-        this._registeredListeners = [];
+        this.#registeredListeners = [];
     }
+
+    // ── PUBLIC GETTERS AND SETTERS ──────────────────────────────
+    get engines() { return this.#engines; }
+    set engines(val) { this.#engines = val; }
+
+    get components() { return this.#components; }
+    set components(val) { this.#components = val; }
+
+    get _registeredListeners() { return this.#registeredListeners; }
+    set _registeredListeners(val) { this.#registeredListeners = val; }
+
 
     // ── COMPONENT REGISTRATION ─────────────────────────────────
     registerComponent(name, instance)
@@ -57,7 +73,7 @@ class UIManager
             throw new TypeError(`UIManager: Component "${name}" getEventMaps() must return an array.`);
         }
 
-                eventMaps.forEach(({ elementId, eventType, actionType, actionValue }) =>
+        eventMaps.forEach(({ elementId, eventType, actionType, actionValue }) =>
         {
             const element = document.getElementById(elementId);
 
@@ -85,88 +101,87 @@ class UIManager
                     ? parseFloat(element.value)
                     : actionValue;
 
-                this._handleComponentAction(actionType, finalValue);
+                this.#handleComponentAction(actionType, finalValue);
             };
 
             // Pass the event object to the handler
             element.addEventListener(eventType, handler);
 
-            this._registeredListeners.push({ element, eventType, handler });
+            this.#registeredListeners.push({ element, eventType, handler });
         });
-
     }
 
     // ── ACTION ROUTING ─────────────────────────────────────────
-    _handleComponentAction(actionType, value)
+    #handleComponentAction(actionType, value)
     {
-        // Local value used when an engine returns a state that must be
-        // broadcast to all UI components. Mute is the current example.
-        let broadcastValue = value;
+    // Local value used when an engine returns a state that must be
+    // broadcast to all UI components. Mute is the current example.
+    let broadcastValue = value;
 
-        // Explicit action routing is intentional.
-        // UIManager is the mediator, so it knows which engine owns each action.
-        // This is safer than blindly sending every action to every engine.
+    // Explicit action routing is intentional.
+    // UIManager is the mediator, so it knows which engine owns each action.
+    // This is safer than blindly sending every action to every engine.
 
-        switch (actionType)
-        {
-            case CONFIG.UIActions.SET_RAIN_INTENSITY:
-                if (this.engines.environment && typeof this.engines.environment.changeIntensity === 'function')
-                {
-                    this.engines.environment.changeIntensity(value);
-                }
-                StorageUtil.set(CONFIG.StorageKeys.RAIN_INTENSITY, value);
-                break;
-
-            case CONFIG.UIActions.SET_COLOR:
-                if (this.engines.visuals && typeof this.engines.visuals.setColor === 'function')
-                {
-                    this.engines.visuals.setColor(value);
-                }
-                StorageUtil.set(CONFIG.StorageKeys.COLOR_THEME, value);
-                break;
-
-            case CONFIG.UIActions.SET_MASTER_VOLUME:
-                if (this.engines.audio && typeof this.engines.audio.setMasterVolume === 'function')
-                {
-                    // UI slider uses 0-100.
-                    // AudioManager expects 0.0-1.0.
-                    this.engines.audio.setMasterVolume(value / CONFIG.System.VOLUME_SCALE_FACTOR);
-                }
-                else if (this.engines.audio)
-                {
-                    this.engines.audio.masterVolume = value / CONFIG.System.VOLUME_SCALE_FACTOR;
-                }
-                StorageUtil.set(CONFIG.StorageKeys.MASTER_VOLUME, value);
-                break;
-
-            case CONFIG.UIActions.TOGGLE_MUTE:
-                if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function')
-                {
-                    broadcastValue = this.engines.audio.toggleMute();
-                }
-                StorageUtil.set(CONFIG.StorageKeys.MUTE_MODE, broadcastValue);
-                break;
-
-            case CONFIG.UIActions.SET_SCROLL_SPEED:
-                StorageUtil.set(CONFIG.StorageKeys.SCROLL_SPEED, value);
-                break;
-
-            case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
-                StorageUtil.set(CONFIG.StorageKeys.SCROLL_MODE, value);
-                break;
-
-            case CONFIG.UIActions.SET_TEXT_MODE:
-                StorageUtil.set(CONFIG.StorageKeys.TEXT_MODE, value);
-                break;
-        }
-
-            // Broadcast the resulting state to ALL registered UI components.
-            // Each component decides whether the action affects its own visual state.
-            this.components.forEach((component) =>
+    switch (actionType)
+    {
+        case CONFIG.UIActions.SET_RAIN_INTENSITY:
+            if (this.engines.environment && typeof this.engines.environment.changeIntensity === 'function')
             {
-                component.updateVisualState(actionType, broadcastValue);
-            });
-        }
+                this.engines.environment.changeIntensity(value);
+            }
+            StorageUtil.set(CONFIG.StorageKeys.RAIN_INTENSITY, value);
+            break;
+
+        case CONFIG.UIActions.SET_COLOR:
+            if (this.engines.visuals && typeof this.engines.visuals.setColor === 'function')
+            {
+                this.engines.visuals.setColor(value);
+            }
+            StorageUtil.set(CONFIG.StorageKeys.COLOR_THEME, value);
+            break;
+
+        case CONFIG.UIActions.SET_MASTER_VOLUME:
+            if (this.engines.audio && typeof this.engines.audio.setMasterVolume === 'function')
+            {
+                // UI slider uses 0-100.
+                // AudioManager expects 0.0-1.0.
+                this.engines.audio.setMasterVolume(value / CONFIG.System.VOLUME_SCALE_FACTOR);
+            }
+            else if (this.engines.audio)
+            {
+                this.engines.audio.masterVolume = value / CONFIG.System.VOLUME_SCALE_FACTOR;
+            }
+            StorageUtil.set(CONFIG.StorageKeys.MASTER_VOLUME, value);
+            break;
+
+        case CONFIG.UIActions.TOGGLE_MUTE:
+            if (this.engines.audio && typeof this.engines.audio.toggleMute === 'function')
+            {
+                broadcastValue = this.engines.audio.toggleMute();
+            }
+            StorageUtil.set(CONFIG.StorageKeys.MUTE_MODE, broadcastValue);
+            break;
+
+        case CONFIG.UIActions.SET_SCROLL_SPEED:
+            StorageUtil.set(CONFIG.StorageKeys.SCROLL_SPEED, value);
+            break;
+
+        case CONFIG.UIActions.TOGGLE_SCROLL_MODE:
+            StorageUtil.set(CONFIG.StorageKeys.SCROLL_MODE, value);
+            break;
+
+        case CONFIG.UIActions.SET_TEXT_MODE:
+            StorageUtil.set(CONFIG.StorageKeys.TEXT_MODE, value);
+            break;
+    }
+
+        // Broadcast the resulting state to ALL registered UI components.
+        // Each component decides whether the action affects its own visual state.
+        this.components.forEach((component) =>
+        {
+            component.updateVisualState(actionType, broadcastValue);
+        });
+    }
 
     // ── INITIAL UI STATE ───────────────────────────────────────
     // Receives a data-driven list of initial states from Engine.
@@ -189,7 +204,7 @@ class UIManager
     }
 
     // SAVE TO LOCALSTORAGE ──────────────────────
-    _saveSetting(key, value)
+    #saveSetting(key, value)
     {
         try 
         {

@@ -14,36 +14,75 @@
 
 class HUD extends UIComponent
 {
+  // ── PRIVATE PROPERTIES ──────────────────────────────────────
+  #el;
+  #scrollSlider;
+  #label;
+  #volSlider;
+  #volLabel;
+  #muteBtn;
+  #autoHideSettings;
+  #hudIdleCountdown = 0;
+  #isHudTimerActive = false;
+  #boundShow;
+
   // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor(autoHideConfig)
     {
         super();
 
         // Main HUD container reference
-        this.el = document.querySelector('.HUD');
+        this.#el = document.querySelector('.HUD');
 
         // Cache control element references
-        this.scrollSlider = document.getElementById('scroll-speed');
-        this.label = document.getElementById('scroll-speed-val');
-        this.volSlider = document.getElementById('master-volume');
-        this.volLabel = document.getElementById('master-volume-val');
-        this.muteBtn = document.getElementById('mute-btn');
+        this.#scrollSlider = document.getElementById('scroll-speed');
+        this.#label = document.getElementById('scroll-speed-val');
+        this.#volSlider = document.getElementById('master-volume');
+        this.#volLabel = document.getElementById('master-volume-val');
+        this.#muteBtn = document.getElementById('mute-btn');
 
         // Auto-hide configuration is supplied by Engine from CONFIG.
-        this._autoHideSettings = autoHideConfig;
+        this.#autoHideSettings = autoHideConfig;
 
-        this.hudIdleCountdown = 0;
-        this.isHudTimerActive = false;
+        this.#hudIdleCountdown = 0;
+        this.#isHudTimerActive = false;
 
         // Save named listener reference so it can be removed during destroy()
-        this._boundShow = () => this.show();
+        this.#boundShow = () => this.show();
 
         // Initialize HUD auto-hide behavior
-        this._initAutoHide();
+        this.#initAutoHide();
 
         this.initScrollSlider();
         this.initVolumeUI();
     }
+
+    // ── PUBLIC GETTERS AND SETTERS ──────────────────────────────
+    get el() { return this.#el; }
+    set el(val) { this.#el = val; }
+
+    get scrollSlider() { return this.#scrollSlider; }
+    set scrollSlider(val) { this.#scrollSlider = val; }
+
+    get label() { return this.#label; }
+    set label(val) { this.#label = val; }
+
+    get volSlider() { return this.#volSlider; }
+    set volSlider(val) { this.#volSlider = val; }
+
+    get volLabel() { return this.#volLabel; }
+    set volLabel(val) { this.#volLabel = val; }
+
+    get muteBtn() { return this.#muteBtn; }
+    set muteBtn(val) { this.#muteBtn = val; }
+
+    get hudIdleCountdown() { return this.#hudIdleCountdown; }
+    set hudIdleCountdown(val) { this.#hudIdleCountdown = val; }
+
+    get isHudTimerActive() { return this.#isHudTimerActive; }
+    set isHudTimerActive(val) { this.#isHudTimerActive = val; }
+
+
 
     // ── EVENT MAP CONFIGURATION ───────────────────────────────
     // Returns event mapping configuration for UIManager.
@@ -142,7 +181,7 @@ class HUD extends UIComponent
     }
 
     // ── AUTO-HIDE INITIALIZATION ───────────────────────────────
-    _initAutoHide()
+    #initAutoHide()
     {
         if (!this.el || !this._autoHideSettings)
         {

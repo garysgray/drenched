@@ -8,22 +8,30 @@
 
 class AudioManager
 {
+  // ── PRIVATE PROPERTIES ──────────────────────────────────────
+  #ctx;
+  #muted = false;
+  #masterVolume;
+  #masterGain;
+  #loops = {};
+  #oneShotPool = [];
+  #maxPoolSize = 12;
+
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(initialVolume = 1)
   {
     // Initialize Web Audio context
-    this.ctx = new AudioContext();
+    this.#ctx = new AudioContext();
     
     // Volume state tracking
-    this.muted = false;
-    this._masterVolume = initialVolume;
+    this.#masterVolume = initialVolume;
 
     // ── SAFARI/iOS AUTO-WAKE TRIGGER GUARD ────────────────────
-    if (this.ctx.state === 'suspended') 
+    if (this.#ctx.state === 'suspended') 
     {
-      this.ctx.onstatechange = () => 
+      this.#ctx.onstatechange = () => 
       {
-        if (this.ctx.state === 'running') 
+        if (this.#ctx.state === 'running') 
         {
           console.log("AudioManager: Audio pipeline unlocked by user gesture.");
         }
@@ -32,19 +40,20 @@ class AudioManager
 
     // ── AUDIO GRAPH SETUP ─────────────────────────────────────
     // Create master gain node (final output stage)
-    this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.value = initialVolume;
-    this.masterGain.connect(this.ctx.destination);
-
-    // ── NODE POOLING SYSTEM ──────────────────────────────────
-    // Pre-allocated channels prevent audio popping
-    this._loops = {}; // Persistent loop channels
-    this._oneShotPool = []; // One-shot effect channels
-    this._maxPoolSize = 12; // Max concurrent sounds
+    this.#masterGain = this.#ctx.createGain();
+    this.#masterGain.gain.value = initialVolume;
+    this.#masterGain.connect(this.#ctx.destination);
 
     // Initialize pre-connected node pools
-    this._initNodePools();
+    this.#initNodePools();
   }
+
+  // ── PUBLIC ACCESSORS ────────────────────────────────────────
+  get ctx() { return this.#ctx; }
+  get muted() { return this.#muted; }
+  set muted(value) { this.#muted = value; }
+  get masterVolume() { return this.#masterVolume; }
+  get masterGain() { return this.#masterGain; }
 
   play(assetKey, params = {}, customStartTime = null) 
   {
@@ -62,7 +71,7 @@ class AudioManager
 
     //  Figure out how long the audio clip needs to be, then generate a blank bucket of random static noise
     const bufferSecs = resolveValue(recipe.bufferSecs, params);
-    const buffer = AudioManager.createNoiseBuffer(this.ctx, bufferSecs);
+    const buffer = AudioManager.createNoiseBuffer(this.#ctx, bufferSecs);
 
     //  Look up audio filter rules (like lowpass/highpass to make thunder sound deep or rain sound crisp)
     let filterConfigs = resolveValue(recipe.filters, params);
@@ -86,7 +95,7 @@ class AudioManager
       attack: resolveValue(rawEnv.attack, params),  // Fade-in time (seconds)
       holdAt: resolveValue(rawEnv.holdAt, params),  // Duration at peak volume
       endTime: resolveValue(rawEnv.endTime, params),// Fade-out time (seconds)
-      startTime: customStartTime || this.ctx.currentTime // Play right now, or at a specific scheduled frame
+      startTime: customStartTime || this.#ctx.currentTime // Play right now, or at a specific scheduled frame
     };
 
     //  Fire the synthesizers! Feed the random static noise through the filters and volume envelopes to play the sound.
@@ -94,26 +103,26 @@ class AudioManager
   }
 
   // Builds and permanently hooks up channels to the master graph at initialization.
-  _initNodePools()
+  #initNodePools()
   {
     // Initialize a pool of pre-connected audio nodes
     // This prevents audio popping by keeping nodes connected at all times
-    for (let i = 0; i < this._maxPoolSize; i++)
+    for (let i = 0; i < this.#maxPoolSize; i++)
     {
-      const gainNode = this.ctx.createGain();
-      gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+      const gainNode = this.#ctx.createGain();
+      gainNode.gain.setValueAtTime(0, this.#ctx.currentTime);
 
       // Create pre-built filter nodes for our static channels
-      const filter1 = this.ctx.createBiquadFilter();
-      const filter2 = this.ctx.createBiquadFilter();
+      const filter1 = this.#ctx.createBiquadFilter();
+      const filter2 = this.#ctx.createBiquadFilter();
 
       // Chain them permanently: Filter 1 -> Filter 2 -> Gain -> Master
       // This fixed connection graph prevents runtime configuration clicks
       filter1.connect(filter2);
       filter2.connect(gainNode);
-      gainNode.connect(this.masterGain);
+      gainNode.connect(this.#masterGain);
 
-      this._oneShotPool.push({
+      this.#oneShotPool.push({
         gain: gainNode,
         filters: [filter1, filter2],
         source: null,
@@ -121,15 +130,14 @@ class AudioManager
       }); 
     }
   }
-  // ── AUDIOMANAGER — PART 2 ────────────────────────────────────
-  // Fallback helper pipeline to link up one-shot configurations cleanly
-    // Reusable channel worker method that completely replaces runtime node instantiation.
+
+  // Reusable channel worker method that completely replaces runtime node instantiation.
   playOneShot(buffer, filter, envelope = {})
   {
-    const startTime = envelope.startTime ?? this.ctx.currentTime;
+    const startTime = envelope.startTime ?? this.#ctx.currentTime;
 
     // Find an available pre-connected channel node in our static memory array pool
-    const channel = this._oneShotPool.find(ch => !ch.inUse || this.ctx.currentTime > ch.endTime);
+    const channel = this.#oneShotPool.find(ch => !ch.inUse || this.#ctx.currentTime > ch.endTime);
     if (!channel) return; // Drop sound if the game is somehow violently overloading sounds
 
     channel.inUse = true;
@@ -137,15 +145,15 @@ class AudioManager
 
     // Reset and apply filter arrays cleanly to the static slots
     const filterConfigs = filter ? (Array.isArray(filter) ? filter : [filter]) : [];
-    this._configureFilter(channel.filters[0], filterConfigs[0]);
-    this._configureFilter(channel.filters[1], filterConfigs[1]);
+    this.#configureFilter(channel.filters[0], filterConfigs[0]);
+    this.#configureFilter(channel.filters[1], filterConfigs[1]);
 
     // Spin up just the source, wire it to the permanent track input, and execute envelope
-    const source = this.ctx.createBufferSource();
+    const source = this.#ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(channel.filters[0]); // <-- Kept exactly as your original code intended!
 
-    this._applyEnvelope(channel.gain.gain, envelope, startTime);
+    this.#applyEnvelope(channel.gain.gain, envelope, startTime);
     source.start(startTime);
     
     channel.source = source;
@@ -180,20 +188,21 @@ class AudioManager
     return buffer;
   }
 
-  // Configures a pre-connected filter node safely without destroying the audio graph.
-  _configureFilter(filterNode, config)
+
+    // Configures a pre-connected filter node safely without destroying the audio graph.
+  #configureFilter(filterNode, config)
   {
     if (!config) {
       filterNode.type = 'allpass'; // Set to allpass (bypass mode) if no filter is required
       return;
     }
     filterNode.type = config.type;
-    if (config.frequency !== undefined) filterNode.frequency.setValueAtTime(config.frequency, this.ctx.currentTime);
-    if (config.Q !== undefined)         filterNode.Q.setValueAtTime(config.Q, this.ctx.currentTime);
-    if (config.gain !== undefined)      filterNode.gain.setValueAtTime(config.gain, this.ctx.currentTime);
+    if (config.frequency !== undefined) filterNode.frequency.setValueAtTime(config.frequency, this.#ctx.currentTime);
+    if (config.Q !== undefined)         filterNode.Q.setValueAtTime(config.Q, this.#ctx.currentTime);
+    if (config.gain !== undefined)      filterNode.gain.setValueAtTime(config.gain, this.#ctx.currentTime);
   }
 
-  _applyEnvelope(gainParam, envelope, startTime)
+  #applyEnvelope(gainParam, envelope, startTime)
   {
     // Apply an ADSR (Attack-Decay-Sustain-Release) envelope to a gain parameter
     const peak    = envelope.peak ?? 1;    // Maximum volume
@@ -219,43 +228,43 @@ class AudioManager
 
   startLoopingNoise(name, buffer, filter)
   {
-    if (this._loops[name]) this.stopLoop(name);
+    if (this.#loops[name]) this.stopLoop(name);
 
-    const source = this.ctx.createBufferSource();
+    const source = this.#ctx.createBufferSource();
     source.buffer = buffer;
     source.loop   = true;
 
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+    const gain = this.#ctx.createGain();
+    gain.gain.setValueAtTime(0, this.#ctx.currentTime);
 
     // Loops are continuous, so we set up a dedicated sub-graph node chain here
-    const filterNode = this.ctx.createBiquadFilter();
-    this._configureFilter(filterNode, filter);
+    const filterNode = this.#ctx.createBiquadFilter();
+    this.#configureFilter(filterNode, filter);
 
     source.connect(filterNode);
     filterNode.connect(gain);
-    gain.connect(this.masterGain);
+    gain.connect(this.#masterGain);
     source.start();
 
-    this._loops[name] = { source, gain, filterNode };
+    this.#loops[name] = { source, gain, filterNode };
     return gain;
   }
 
   stopLoop(name)
   {
-    const loop = this._loops[name];
+    const loop = this.#loops[name];
     if (!loop) return;
 
     try { loop.source.stop(); } catch (_) {}
-    delete this._loops[name];
+    delete this.#loops[name];
   }
 
   setLoopGain(name, value, timeConstant = 0)
   {
-    const loop = this._loops[name];
+    const loop = this.#loops[name];
     if (!loop) return;
 
-    const now = this.ctx.currentTime;
+    const now = this.#ctx.currentTime;
     const safeValue = isFinite(value) ? value : 0;
 
     if (timeConstant > 0) {
@@ -268,49 +277,63 @@ class AudioManager
   // ── DYNAMIC ENGINE MODULATORS ──────────────────────────────
   setMasterVolume(value)
   {
-    this._masterVolume = value;
-    if (!this.muted && this.masterGain)
+    this.#masterVolume = value;
+    if (!this.#muted && this.#masterGain)
     {
-      this.masterGain.gain.setValueAtTime(value, this.ctx.currentTime);
+      this.#masterGain.gain.setValueAtTime(value, this.#ctx.currentTime);
     }
+  }
+  
+  setMute(value)
+  {
+      this.#muted = value;
+
+      const targetVolume = this.#muted ? 0 : this.#masterVolume;
+
+      if (this.#masterGain)
+      {
+          this.#masterGain.gain.setValueAtTime(
+              targetVolume,
+              this.#ctx.currentTime
+          );
+      }
   }
 
   toggleMute()
   {
-    this.muted = !this.muted;
-    const targetVolume = this.muted ? 0 : this._masterVolume;
-    if (this.masterGain) 
+    this.#muted = !this.#muted;
+    const targetVolume = this.#muted ? 0 : this.#masterVolume;
+    if (this.#masterGain) 
     {
-      this.masterGain.gain.setValueAtTime(targetVolume, this.ctx.currentTime);
+      this.#masterGain.gain.setValueAtTime(targetVolume, this.#ctx.currentTime);
     }
-    return this.muted;
+    return this.#muted;
   }
 
   resume()
   {
-    if (this.ctx && typeof this.ctx.resume === 'function') 
+    if (this.#ctx && typeof this.#ctx.resume === 'function') 
     {
-      return this.ctx.resume().then(() => {
+      return this.#ctx.resume().then(() => {
         // Enforce the saved mute state on the hardware node immediately after resuming
-        const targetVolume = this.muted ? 0 : this._masterVolume;
-        if (this.masterGain) 
+        const targetVolume = this.#muted ? 0 : this.#masterVolume;
+        if (this.#masterGain) 
         {
-          this.masterGain.gain.setValueAtTime(targetVolume, this.ctx.currentTime);
+          this.#masterGain.gain.setValueAtTime(targetVolume, this.#ctx.currentTime);
         }
       });
     }
     return Promise.resolve();
   }
 
-
   // ── MASTER TEARDOWN PIPELINE ────────────────────────────────
   stopAll()
   {
     console.log("AudioManager: Disposing active synthesizers and looping nodes...");
     
-    Object.keys(this._loops).forEach(name => this.stopLoop(name));
+    Object.keys(this.#loops).forEach(name => this.stopLoop(name));
 
-    this._oneShotPool.forEach(channel => 
+    this.#oneShotPool.forEach(channel => 
     {
       if (channel.source) 
       {
@@ -319,9 +342,9 @@ class AudioManager
       channel.inUse = false;
     });
 
-    if (this.ctx && typeof this.ctx.close === 'function')
+    if (this.#ctx && typeof this.#ctx.close === 'function')
     {
-      this.ctx.close().then(() => 
+      this.#ctx.close().then(() => 
       {
         console.log("AudioManager: AudioContext closed cleanly.");
       });

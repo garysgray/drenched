@@ -8,28 +8,55 @@
 
 class EnvironmentController
 {
+    // ── PRIVATE PROPERTIES ──────────────────────────────────────
+    #audio;
+    #visuals;
+    #text;
+    #strikeCountdown = 0;
+    #isStormActive = false;
+    #currentIntensity = null;
+
     // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor(audio, visuals, text)
     {
         // References to the systems controlled by this coordinator
-        this.audio = audio;
-        this.visuals = visuals;
-        this.text = text;
+        this.#audio = audio;
+        this.#visuals = visuals;
+        this.#text = text;
 
         // ── DELTA TIME STATE TRACKING ──────────────────────────
         // Counts down remaining seconds until the next storm strike.
-        this.strikeCountdown = 0;
-        this.isStormActive = false;
+        this.#strikeCountdown = 0;
+        this.#isStormActive = false;
 
         // Current weather intensity
-        this.currentIntensity = null;
+        this.#currentIntensity = null;
 
         // Initialize persistent rain audio
-        this._initRainLoop();
+        this.#initRainLoop();
     }
 
+    // ── PUBLIC GETTERS AND SETTERS ──────────────────────────────
+    get audio() { return this.#audio; }
+    set audio(val) { this.#audio = val; }
+
+    get visuals() { return this.#visuals; }
+    set visuals(val) { this.#visuals = val; }
+
+    get text() { return this.#text; }
+    set text(val) { this.#text = val; }
+
+    get strikeCountdown() { return this.#strikeCountdown; }
+    set strikeCountdown(val) { this.#strikeCountdown = val; }
+
+    get isStormActive() { return this.#isStormActive; }
+    set isStormActive(val) { this.#isStormActive = val; }
+
+    get currentIntensity() { return this.#currentIntensity; }
+    set currentIntensity(val) { this.#currentIntensity = val; }
+
     // ── PERSISTENT RAIN AUDIO ──────────────────────────────────
-    _initRainLoop()
+    #initRainLoop()
     {
         if (!this.audio || !this.audio.ctx)
         {

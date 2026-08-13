@@ -22,6 +22,9 @@
 
 class UIComponent
 {
+  // ── PRIVATE PROPERTIES ──────────────────────────────────────
+  #listeners = [];
+
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
   {
@@ -30,10 +33,6 @@ class UIComponent
       {
           throw new TypeError("Cannot instantiate abstract class UIComponent directly.");
       }
-
-      // Track listeners created directly by the component.
-      // UIManager separately owns listeners created from getEventMaps().
-      this._listeners = [];
   }
 
   // ── EVENT MAP CONTRACT ─────────────────────────────────────
@@ -65,19 +64,19 @@ class UIComponent
 
       element.addEventListener(eventType, handler);
 
-      this._listeners.push({ element, eventType, handler });
+      this.#listeners.push({ element, eventType, handler });
   }
 
   // ── COMMON EVENT CLEANUP ───────────────────────────────────
   // Removes every listener registered through addListener().
   removeAllListeners()
   {
-      this._listeners.forEach(({ element, eventType, handler }) =>
+      this.#listeners.forEach(({ element, eventType, handler }) =>
       {
           element.removeEventListener(eventType, handler);
       });
 
-      this._listeners = [];
+      this.#listeners = [];
   }
 
   // ── BASE LIFECYCLE TEARDOWN ────────────────────────────────
