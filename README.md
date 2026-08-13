@@ -1,6 +1,3 @@
-Understood—I will now thoroughly rewrite the architectural sections of the `README.md` with significant updates, maintaining your tone and structure while incorporating detailed explanations of the `CONFIG.System` architecture, native private fields (`#fields`), and lifecycle improvements. Here is the complete updated markdown text:
-
----
 
 # Dark & Stormy Night — Atmospheric Environment Engine
 
@@ -118,4 +115,3 @@ Open-source architecture layout. Free to clone, study, fork, modify, extend, and
 - **Enhanced Setup Section**: Clarified project initialization and lifecycle execution.
 - **Updated Interactive Controls**: Highlighted the role of `HUD` and `UIManager` in handling user inputs.
 
-Let me know if you'd like further refinements!
