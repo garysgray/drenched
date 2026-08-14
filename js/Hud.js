@@ -183,21 +183,21 @@ class HUD extends UIComponent
     // ── AUTO-HIDE INITIALIZATION ───────────────────────────────
     #initAutoHide()
     {
-        if (!this.el || !this._autoHideSettings)
+        if (!this.el || !this.#autoHideSettings)
         {
             return;
         }
 
         // Apply the CSS transition style from supplied configuration
-        this.el.style.transition = this._autoHideSettings.transitionCss;
+        this.el.style.transition = this.#autoHideSettings.transitionCss;
 
         // Show the HUD immediately on startup
         this.show();
 
         // HUD owns its own global interaction listeners.
-        document.addEventListener('mousemove', this._boundShow);
-        document.addEventListener('touchstart', this._boundShow);
-        document.addEventListener('touchmove', this._boundShow);
+        document.addEventListener('mousemove', this.#boundShow);
+        document.addEventListener('touchstart', this.#boundShow);
+        document.addEventListener('touchmove', this.#boundShow);
     }
     // ── MASTER HUD TICK LOOP ─────────────────────────────────────
     // Driven 60 times a second by your Engine.js game loop
@@ -224,7 +224,7 @@ class HUD extends UIComponent
     // Makes the HUD visible and restarts the auto-hide countdown.
     show()
     {
-        if (!this.el || !this._autoHideSettings)
+        if (!this.el || !this.#autoHideSettings)
         {
             return;
         }
@@ -232,7 +232,7 @@ class HUD extends UIComponent
         requestAnimationFrame(() =>
         {
             this.el.style.cssText = `
-                transition: ${this._autoHideSettings.transitionCss};
+                transition: ${this.#autoHideSettings.transitionCss};
                 opacity: 1;
                 pointer-events: auto;
                 transform: translateX(-50%) translateY(0);
@@ -243,7 +243,7 @@ class HUD extends UIComponent
 
         // ── THE TIMING FIX ─────────────────────────────────────
         // Convert your configured milliseconds safely into pure SECONDS
-        const autoHideSeconds = this._autoHideSettings.autoHideMs / CONFIG.System.MS_PER_SECOND;
+        const autoHideSeconds = this.#autoHideSettings.autoHideMs / CONFIG.System.MS_PER_SECOND;
 
         // Seed the active countdown deadline
         this.hudIdleCountdown = autoHideSeconds;
@@ -253,7 +253,7 @@ class HUD extends UIComponent
     // Hides the HUD after the configured inactivity period.
     hide()
     {
-        if (!this.el || !this._autoHideSettings)
+        if (!this.el || !this.#autoHideSettings)
         {
             return;
         }
@@ -261,7 +261,7 @@ class HUD extends UIComponent
         requestAnimationFrame(() =>
         {
             this.el.style.cssText = `
-                transition: ${this._autoHideSettings.transitionCss};
+                transition: ${this.#autoHideSettings.transitionCss};
                 opacity: 0;
                 pointer-events: none;
                 transform: translateX(-50%) translateY(20px);
@@ -431,9 +431,9 @@ class HUD extends UIComponent
     destroy()
     {
         // Remove global mouse/touch listeners owned by HUD
-        document.removeEventListener('mousemove', this._boundShow);
-        document.removeEventListener('touchstart', this._boundShow);
-        document.removeEventListener('touchmove', this._boundShow);
+        document.removeEventListener('mousemove', this.#boundShow);
+        document.removeEventListener('touchstart', this.#boundShow);
+        document.removeEventListener('touchmove', this.#boundShow);
 
         // Kill active auto-hide timer
         clearTimeout(this.hideTimer);
