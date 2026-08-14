@@ -28,7 +28,7 @@
   --text-top:            22vh;     /* vertical position of hero text and scroll text */
   --text-pad-x:          4vw;      /* horizontal padding around hero text */
   --hud-bottom:          32px;     /* HUD distance from bottom on desktop */
-  --hud-bottom-mobile:   20px;     /* HUD distance from bottom on mobile */
+  --hud-bottom-mobile:   60px;     /* HUD distance from bottom on mobile */
   --hud-pad:             12px 18px;
   --hud-pad-mobile:      14px 16px;
 
